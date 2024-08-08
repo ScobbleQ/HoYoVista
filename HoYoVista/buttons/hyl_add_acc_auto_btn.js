@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, hyperlink } = require('discord.js');
-const { embedColors } = require('../config');
+const { embedColors } = require('../../config');
 
 module.exports = {
     data: {

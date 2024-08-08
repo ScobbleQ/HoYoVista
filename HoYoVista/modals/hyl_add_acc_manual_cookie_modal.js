@@ -1,15 +1,15 @@
 const { EmbedBuilder } = require('discord.js');
-const { checkIfUserExists, addUserToDatabase } = require('../utils//mongo');
-const { parseHoyolabInfo } = require('../utils/parseHoyolabInfo');
-const { embedColors } = require('../config');
+const { checkIfUserExists, addUserToDatabase } = require('../utils/mongo');
+const { embedColors } = require('../../config');
 
 module.exports = {
     data: {
-        id: 'hyl_add_acc_auto_cookie_modal',
-        description: 'Add HoYoLAB Account (Auto)',
+        id: 'hyl_add_acc_manual_cookie_modal',
+        description: 'Add HoYoLAB Account (Manual) with Cookie',
     },
     async execute(interaction, dbClient) {
-        const cookies = interaction.fields.getTextInputValue('hyl_acc_cookies');
+		const ltuid_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltuid_v2');
+		const ltoken_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltoken_v2');
 
         // Check again if the user exists in the database
         if (!checkIfUserExists(dbClient, interaction.user.id)) {
@@ -21,9 +21,7 @@ module.exports = {
             return;
         }
 
-        const info = parseHoyolabInfo(cookies);
-        const message = await addUserToDatabase(dbClient, interaction.user.id, info.ltoken_v2, info.ltuid_v2);
-
+        const message = await addUserToDatabase(dbClient, interaction.user.id, ltoken_v2, ltuid_v2);
         if (message.status === "Fail") {
             const embed = new EmbedBuilder()
                 .setColor(embedColors.error)

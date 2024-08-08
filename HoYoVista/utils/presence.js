@@ -1,4 +1,4 @@
-const { presence } = require('../config.js');
+const { presence } = require('../../config');
 
 /**
  * Set a random presence for the bot

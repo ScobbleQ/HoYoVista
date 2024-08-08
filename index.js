@@ -1,8 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
-const config = require('./config')
-const { connectToDatabase } = require('./utils/mongo');
+const config = require('./config');
+const { connectToDatabase } = require('./HoYoVista/utils/mongo');
 
 const client = new Client({
 	intents: [
@@ -17,7 +17,7 @@ async function initializeDiscordBot() {
 	try {
 		const dbClient = await connectToDatabase();
 
-		const foldersPath = path.join(__dirname, 'commands');
+		const foldersPath = path.join(__dirname, 'HoYoVista', 'commands');
 		const commandFolders = fs.readdirSync(foldersPath);
 
 		for (const file of commandFolders) {
@@ -30,7 +30,7 @@ async function initializeDiscordBot() {
 			}
 		}
 
-		const eventsPath = path.join(__dirname, 'events');
+		const eventsPath = path.join(__dirname, 'HoYoVista', 'events');
 		const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
 		for (const file of eventFiles) {

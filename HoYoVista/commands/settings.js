@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, codeBlock } = require('discord.js');
 const { getUserDisplayPreference, getUserPrivacyPreference, getUserNotifPreference } = require('../utils/mongo');
-const { embedColors } = require('../config');
+const { embedColors } = require('../../config');
 
 module.exports = {
 	data: new SlashCommandBuilder()

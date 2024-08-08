@@ -1,9 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { checkIfUserExists, getUserData, getSpecificProjection, getUserPrivacyPreference } = require('../utils//mongo');
-const { hoyolabCheckin, checkinEveryGame, getCheckinInfo } = require('../utils//hoyolab');
+const { hoyolabCheckin, checkinEveryGame, getCheckinInfo } = require('../utils/hoyolab');
 const { getGameUrl } = require('../utils/getGameUrl');
 const { censorUid, censorUsername } = require('../utils/censorInformation');
-const { embedColors } = require('../config');
+const { embedColors } = require('../../config');
 
 module.exports = {
 	data: new SlashCommandBuilder()

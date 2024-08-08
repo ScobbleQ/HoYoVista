@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
-const { getSpecificProjection, getUserData, getUserNotifPreference, getUserPrivacyPreference } = require('../utils/mongo');
+const { getSpecificProjection, getUserData, getUserNotifPreference, getUserPrivacyPreference } = require('./mongo');
 const { getGameUrl } = require('./getGameUrl');
 const { censorUid, censorUsername } = require('./censorInformation');
 

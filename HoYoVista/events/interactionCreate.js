@@ -1,7 +1,7 @@
 const { Events, Collection } = require('discord.js');
 const buttonHandlers = require('../handlers/buttonHandlerLoader');
 const modalHandlers = require('../handlers/modalHandlerLoader');
-const { removeAccount } = require('../utils//hoyolab');
+const { removeAccount } = require('../utils/mongo');
 
 module.exports = {
 	name: Events.InteractionCreate,

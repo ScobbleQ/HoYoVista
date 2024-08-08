@@ -1,6 +1,6 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const axios = require('axios');
-const config = require('../config');
+const config = require('../../config');
 
 /**
  * Connects to the MongoDB database

@@ -3,7 +3,7 @@ const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const { checkIfUserExists, getUserDisplayPreference, getUserPrivacyPreference } = require('../utils//mongo');
 const { getProfileViaHoyolab, getGameViaHoyolab } = require('../utils//hoyolab');
 const { centerText, drawRoundedRect, drawVignette, drawAvatar, calculateFontSize, drawWrappedText, renderGames } = require('../utils/profileDrawer');
-const { embedColors } = require('../config');
+const { embedColors } = require('../../config');
 
 module.exports = {
 	data: new SlashCommandBuilder()
