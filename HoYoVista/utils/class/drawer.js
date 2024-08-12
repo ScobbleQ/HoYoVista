@@ -1,4 +1,5 @@
-const { loadImage } = require('@napi-rs/canvas');
+const { loadImage, GlobalFonts } = require('@napi-rs/canvas');
+const path = require('node:path');
 
 /**
  * Class to handle drawing on the canvas
@@ -193,6 +194,15 @@ class Drawer {
             const excessCount = charCount - threshold;
             const scale = excessCount / (maxCharCount - threshold);
             return maxFontSize - ((maxFontSize - minFontSize) * scale);
+        }
+    }
+
+    static loadFont() {
+        try {
+            GlobalFonts.registerFromPath(path.join(__dirname, 'assets', 'fonts', 'Helvetica.ttf'), 'Helvetica');
+            GlobalFonts.registerFromPath(path.join(__dirname, 'assets', 'fonts', 'Helvetica-Bold.ttf'), 'Helvetica-Bold');
+        } catch (error) {
+            throw new Error(`Failed to load font: ${error}`);
         }
     }
 }

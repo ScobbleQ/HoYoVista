@@ -42,7 +42,7 @@ module.exports = {
             ? Object.keys(user.linkedGamesList)
             : [selectedGame];
 
-        if (!await mongo.isGameLinked(gamesToCheck[0])) {
+        if (!mongo.isGameLinked(gamesToCheck[0])) {
             return await interaction.editReply({
                 embeds: [new EmbedBuilder()
                     .setColor(embedColors.error)
