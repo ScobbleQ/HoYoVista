@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
-const { checkIfUserExists, addUserToDatabase } = require('../utils/mongo');
+const { HoYoLAB } = require('../utils/class/hoyolab');
+const { MongoDB } = require('../utils/class/mongo');
 const { embedColors } = require('../../config');
 
 module.exports = {
@@ -8,33 +9,44 @@ module.exports = {
         description: 'Add HoYoLAB Account (Manual) with Cookie',
     },
     async execute(interaction, dbClient) {
-		const ltuid_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltuid_v2');
-		const ltoken_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltoken_v2');
+        const ltuid_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltuid_v2');
+        const ltoken_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltoken_v2');
+        const mongo = new MongoDB(dbClient, interaction.user.id);
 
-        // Check again if the user exists in the database
-        if (!checkIfUserExists(dbClient, interaction.user.id)) {
-            const embed = new EmbedBuilder()
-                .setColor(embedColors.error)
-                .setTitle('Error')
-                .setDescription('You already have an account registered. Use `/account` to view and manage your account.');
-            await interaction.update({ embeds: [embed], components: [] });
-            return;
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor(embedColors.warning)
+                .setDescription('Hang on while we process the information')
+            ],
+            components: []
+        });
+
+        if (await mongo.checkIfUserExists()) {
+            await interaction.deleteReply();
+            return await interaction.followUp({
+                embeds: [new EmbedBuilder()
+                    .setColor(embedColors.error)
+                    .setDescription('You already have a HoYoLAB account linked.')
+                ],
+                ephemeral: true
+            });
         }
 
-        const message = await addUserToDatabase(dbClient, interaction.user.id, ltoken_v2, ltuid_v2);
-        if (message.status === "Fail") {
-            const embed = new EmbedBuilder()
-                .setColor(embedColors.error)
-                .setTitle('Error')
-                .setDescription(`${message.message}. Please try again.`);
-            await interaction.update({ embeds: [embed], components: [] });
-            return;
-        }
+        await mongo.registerUser(ltoken_v2, ltuid_v2);
 
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.success)
-            .setTitle('Success')
-            .setDescription(`Use \`/account\` again to view and manage your HoYoLAB account`);
-        await interaction.update({ embeds: [embed], components: [] });
+        const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2);
+        await hoyolab.initBasicGameData();
+
+        await mongo.updateUserWithGameProfiles(hoyolab.basicGameData);
+
+        await interaction.deleteReply();
+        await interaction.followUp({ 
+            embeds: [new EmbedBuilder()
+                .setColor(embedColors.success)
+                .setTitle('Account Successfully Registered')
+                .setDescription('Welcome aboard! To view and manage your account, use `/account`.')
+            ], 
+            ephemeral: true
+        });
     },
 }

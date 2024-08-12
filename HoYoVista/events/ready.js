@@ -1,7 +1,7 @@
 const { Events } = require('discord.js');
-const { Cron } = require('../utils/cron');
+const { Cron } = require('../utils/class/cron');
+const { HoYoLAB } = require('../utils/class/hoyolab');
 const { setPresence } = require('../utils/presence');
-const { dailyCheckin } = require('../utils/hoyolab');
 
 module.exports = {
 	name: Events.ClientReady,
@@ -12,7 +12,7 @@ module.exports = {
 
 		const cron = new Cron();
 		cron.addJob('0 */30 * * * *', setPresence, client);
-		cron.addJob('5 12 * * *', dailyCheckin, client, dbClient);
+		cron.addJob('5 12 * * *', HoYoLAB.autoCheckin, client, dbClient);
 
 		cron.startJobs();
 	},

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, codeBlock } = require('discord.js');
-const { getUserDisplayPreference, getUserPrivacyPreference, getUserNotifPreference } = require('../utils/mongo');
+const { MongoDB } = require('../utils/class/mongo');
 const { embedColors } = require('../../config');
 
 module.exports = {
@@ -7,13 +7,15 @@ module.exports = {
 		.setName('settings')
 		.setDescription('Configure your user settings'),
 	async execute(interaction, dbClient, update) {
+		const mongo = new MongoDB(dbClient, interaction.user.id);
+
 		if (update === null || update === undefined) {
 			update = false;
 		}
 
-		const displayPreference = await getUserDisplayPreference(dbClient, interaction.user.id) ? 'Dark Mode' : 'Light Mode';
-		const privacyPreference = await getUserPrivacyPreference(dbClient, interaction.user.id) ? 'Private' : 'Public';
-		const notifPreference = await getUserNotifPreference(dbClient, interaction.user.id) ? 'Enabled' : 'Disabled';
+		const displayPreference = await mongo.getUserPreference("settings.darkMode") ? 'Dark Mode' : 'Light Mode';
+		const privacyPreference = await mongo.getUserPreference("settings.isPrivate") ? 'Private' : 'Public';
+		const notifPreference = await mongo.getUserPreference("settings.checkinNotif") ? 'Enabled' : 'Disabled';
 
 		const embed = new EmbedBuilder()
 			.setColor(embedColors.default)

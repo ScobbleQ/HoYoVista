@@ -1,7 +1,9 @@
-const { Events, Collection } = require('discord.js');
+const { Events, Collection, EmbedBuilder } = require('discord.js');
 const buttonHandlers = require('../handlers/buttonHandlerLoader');
 const modalHandlers = require('../handlers/modalHandlerLoader');
-const { removeAccount } = require('../utils/mongo');
+const { MongoDB } = require('../utils/class/mongo');
+const config = require('../../config');
+const account = require('../commands/account');
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -57,11 +59,30 @@ module.exports = {
 				const idParts = buttonId.replace('db_unlink_hyl_', '').split('_');
 
 				if (idParts.length === 1) {
-					const discordId = idParts[0];
-					await removeAccount(interaction, dbClient, discordId, 'all');
+					await MongoDB.deleteUser(dbClient, idParts[0]);
+
+					await interaction.message.edit({ 
+						embeds: [new EmbedBuilder()
+							.setColor(config.embedColors.success)
+							.setTitle('HoYoLAB Data Unlinked')
+							.setDescription('Your HoYoLAB data has been successfully unlinked.')
+						], 
+						components: []
+					});
 				} else if (idParts.length === 2) {
 					const [discordId, gameName] = idParts;
-					await removeAccount(interaction, dbClient, discordId, gameName);
+					await MongoDB.deleteGame(dbClient, discordId, gameName);
+
+					await account.execute(interaction, dbClient, true);
+
+					await interaction.followUp({ 
+						embeds: [new EmbedBuilder()
+							.setColor(config.embedColors.success)
+							.setTitle('Game Data Unlinked')
+							.setDescription(`Your data for \`${gameName}\` has been successfully unlinked.`)
+						], 
+						ephemeral: true
+					});
 				}
 			} else {
 				const handler = buttonHandlers.get(buttonId);

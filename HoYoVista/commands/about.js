@@ -9,15 +9,18 @@ module.exports = {
         .setDescription('Shows information on the bot'),
     async execute(interaction) {
         try {
+            const [guildCounts, nodeVersion, memoryUsage, cpuUsage, apiLatency, platform, cpuInfo, systemUptime] = await Promise.all([
+                interaction.client.shard.fetchClientValues('guilds.cache.size').then(results => results.reduce((acc, guildCount) => acc + guildCount, 0)),
+                process.versions.node,
+                (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+                (process.cpuUsage().system / 1000).toFixed(2),
+                Date.now() - interaction.createdTimestamp,
+                `${os.platform()} ${os.release()}`,
+                `${os.cpus().length}x ${os.cpus()[0].model} @ ${os.cpus()[0].speed}MHz`,
+                formatSeconds(os.uptime())
+            ]);
+
             const botRuntime = formatSeconds(interaction.client.uptime / 1000);
-            const guilds = interaction.client.guilds.cache.size;
-            const nodeVersion = process.versions.node;
-            const memoryUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
-            const cpuUsage = (process.cpuUsage().system / 1000).toFixed(2);
-            const apiLatency = Date.now() - interaction.createdTimestamp;
-            const platform = os.platform() + " " + os.release();
-            const cpuInfo = `${os.cpus().length}x ${os.cpus()[0].model} @ ${os.cpus()[0].speed}MHz`;
-            const systemUptime = formatSeconds(os.uptime());
 
             const aboutEmbed = new EmbedBuilder()
                 .setColor(config.embedColors.default)
@@ -26,7 +29,7 @@ module.exports = {
                 .addFields(
                     {
                         name: "Bot Stats",
-                        value: formatCode(`Guilds: ${guilds}\nNodeJS: v${nodeVersion}\n${package.name}: v${package.version}`),
+                        value: formatCode(`Guilds: ${guildCounts}\nNodeJS: v${nodeVersion}\n${package.name}: v${package.version}`),
                         inline: true
                     },
                     {

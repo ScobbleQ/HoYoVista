@@ -1,83 +1,70 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { checkIfUserExists, getUserData, getSpecificProjection, getUserPrivacyPreference } = require('../utils//mongo');
-const { hoyolabCheckin, checkinEveryGame, getCheckinInfo } = require('../utils/hoyolab');
-const { getGameUrl } = require('../utils/getGameUrl');
-const { censorUid, censorUsername } = require('../utils/censorInformation');
+const { MongoDB } = require('../utils/class/mongo');
+const { HoYoLAB } = require('../utils/class/hoyolab');
 const { embedColors } = require('../../config');
 
 module.exports = {
-	data: new SlashCommandBuilder()
-		.setName('check-in')
-		.setDescription('Daily check-in from HoYoLAB')
+    data: new SlashCommandBuilder()
+        .setName('check-in')
+        .setDescription('Daily check-in from HoYoLAB')
         .addStringOption(option => option
             .setName('game')
             .setDescription('The game to check-in for')
             .setRequired(false)
             .addChoices(
-                { name: 'Honkai Impact 3rd', value: 'hi3' },
-                { name: 'Genshin Impact', value: 'gi' },
-                { name: 'Honkai: Star Rail', value: 'hsr' },
-                { name: 'Zenless Zone Zero', value: 'zzz' },
-                { name: 'Every Linked Game', value: 'all' }
+                { name: 'Every Linked Game', value: 'all' },
+                { name: 'Honkai Impact 3rd', value: 'honkai3rd' },
+                { name: 'Genshin Impact', value: 'genshin' },
+                { name: 'Honkai: Star Rail', value: 'hkrpg' },
+                { name: 'Zenless Zone Zero', value: 'zzz' }
             )),
-	async execute(interaction, dbClient) {
+    
+    async execute(interaction, dbClient) {
+        const selectedGame = interaction.options.getString('game') || 'all';
+        const mongo = new MongoDB(dbClient, interaction.user.id);
+
+        if (!await mongo.checkIfUserExists()) {
+            return await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(embedColors.error)
+                    .setDescription('You don\'t have a HoYoLAB account linked yet.')
+                ],
+                ephemeral: true,
+            });
+        }
+
         await interaction.deferReply();
 
-		const selectedGame = interaction.options.getString('game') || 'all';
+        const user = await mongo.getUserData();
+        const hoyolab = new HoYoLAB(user.hoyolab.ltoken_v2, user.hoyolab.ltuid_v2);
 
-        const gameNames = {
-			hi3: 'Honkai Impact 3rd',
-			gi: 'Genshin Impact',
-			hsr: 'Honkai: Star Rail',
-			zzz: 'Zenless Zone Zero'
-		};
-		
-		const selectedGameName = gameNames[selectedGame] || 'all';
+        const gamesToCheck = selectedGame === 'all'
+            ? Object.keys(user.linkedGamesList)
+            : [selectedGame];
 
-        if (!await checkIfUserExists(dbClient, interaction.user.id)) {
-            const NAF_Embed = new EmbedBuilder()
-                .setTitle('No Account Found')
-                .setDescription('You don\'t have any accounts found in the database. Please register first.')
-                .setColor(embedColors.error);
-            await interaction.editReply({ embeds: [NAF_Embed] });
-            return;
+        if (!await mongo.isGameLinked(gamesToCheck[0])) {
+            return await interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(embedColors.error)
+                    .setDescription('You don\'t have this game linked to your HoYoLAB account.')
+                ],
+                ephemeral: true,
+            });
         }
 
-        if (selectedGame === 'all') {
-            await checkinEveryGame(interaction, dbClient, interaction.user.id);
-            return;
+        const privacy = await mongo.getUserPreference("settings.isPrivate");
+        const checkinPromises = gamesToCheck.map(game => hoyolab.checkInGame(game, user, privacy));
+        const checkinEmbeds = await Promise.all(checkinPromises);
+
+        await interaction.editReply({ embeds: [checkinEmbeds.shift()] });
+        for (const embed of checkinEmbeds) {
+            if (embed) {
+                if (interaction.inCachedGuild()) {
+                    await interaction.channel.send({ embeds: [embed] });
+                } else {
+                    await interaction.client.users.send(interaction.user.id, { embeds: [embed] });
+                }
+            }
         }
-
-        const user = await getUserData(dbClient, interaction.user.id);
-        const { ltoken_v2, ltuid_v2 } = user.hoyoverse.hoyolab;
-
-        const database = await getSpecificProjection(dbClient, interaction.user.id, selectedGame.toLowerCase());
-        let { username, uid } = database.hoyoverse[selectedGame.toLowerCase()];
-
-        if (await getUserPrivacyPreference(dbClient, interaction.user.id)) {
-            username = censorUsername(username);
-            uid = censorUid(uid);
-        }
-
-        if (await hoyolabCheckin(selectedGameName, ltoken_v2, ltuid_v2) === 0) {
-            const { award } = await getCheckinInfo(selectedGameName, ltoken_v2, ltuid_v2);
-
-            const checkinEmbed = new EmbedBuilder()
-                .setColor(embedColors.default)
-                .setTitle('Daily Check-in Reward Claimed')
-                .setAuthor({ name: `${username} (${uid})`, iconURL: await getGameUrl(selectedGameName).logo })
-                .setDescription(`${award.name} x${award.cnt}`)
-                .setThumbnail(award.icon);
-
-            await interaction.editReply({ embeds: [checkinEmbed] });
-        } else {
-            const checkinEmbed = new EmbedBuilder()
-                .setColor(embedColors.error)
-                .setTitle('Daily Check-in Failed')
-                .setAuthor({ name: `${username} (${uid})`, iconURL: await getGameUrl(selectedGameName).logo })
-                .setDescription('You have already claimed your daily check-in reward for today.');
-
-            await interaction.editReply({ embeds: [checkinEmbed] });
-        }
-	},
+    },
 };

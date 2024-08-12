@@ -1,4 +1,4 @@
-const { getUserDisplayPreference, setUserDisplayPreference } = require('../utils/mongo');
+const { MongoDB } = require('../utils/class/mongo');
 const settings = require('../commands/settings');
 
 module.exports = {
@@ -7,8 +7,10 @@ module.exports = {
         description: 'Change the display settings of your account',
     },
     async execute(interaction, dbClient) {
-        const currentDisplayPreference = await getUserDisplayPreference(dbClient, interaction.user.id);
-        await setUserDisplayPreference(dbClient, interaction.user.id, !currentDisplayPreference);
+        const mongo = new MongoDB(dbClient, interaction.user.id);
+
+        const currentDisplayPreference = await mongo.getUserPreference("settings.darkMode");
+        await mongo.setUserPreference("settings.darkMode", !currentDisplayPreference);
 
         await settings.execute(interaction, dbClient, true);
     },

@@ -1,4 +1,4 @@
-const { getUserPrivacyPreference, setUserPrivacyPreference } = require('../utils/mongo');
+const { MongoDB } = require('../utils/class/mongo');
 const settings = require('../commands/settings');
 
 module.exports = {
@@ -7,8 +7,10 @@ module.exports = {
         description: 'Change the privacy settings of your account',
     },
     async execute(interaction, dbClient) {
-        const currentPrivacyPreference = await getUserPrivacyPreference(dbClient, interaction.user.id);
-        await setUserPrivacyPreference(dbClient, interaction.user.id, !currentPrivacyPreference);
+        const mongo = new MongoDB(dbClient, interaction.user.id);
+
+        const currentPrivacyPreference = await mongo.getUserPreference("settings.isPrivate");
+        await mongo.setUserPreference("settings.isPrivate", !currentPrivacyPreference);
 
         await settings.execute(interaction, dbClient, true);
     },

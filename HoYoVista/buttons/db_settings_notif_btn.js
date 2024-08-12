@@ -1,4 +1,4 @@
-const { getUserNotifPreference, setUserNotifPreference } = require('../utils/mongo');
+const { MongoDB } = require('../utils/class/mongo');
 const settings = require('../commands/settings');
 
 module.exports = {
@@ -7,8 +7,10 @@ module.exports = {
         description: 'Change the notification settings of your account',
     },
     async execute(interaction, dbClient) {
-        const currentNotifPreference = await getUserNotifPreference(dbClient, interaction.user.id);
-        await setUserNotifPreference(dbClient, interaction.user.id, !currentNotifPreference);
+        const mongo = new MongoDB(dbClient, interaction.user.id);
+
+        const currentNotifPreference = await mongo.getUserPreference("settings.checkinNotif");
+        await mongo.setUserPreference("settings.checkinNotif", !currentNotifPreference);
 
         await settings.execute(interaction, dbClient, true);
     },
