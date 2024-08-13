@@ -36,7 +36,7 @@ class Drawer {
         const string = text.toString();
         const width = this.#ctx.measureText(string).width;
         const startX = x - width;
-    
+
         this.#ctx.fillText(string, startX, y);
     }
 
@@ -81,7 +81,7 @@ class Drawer {
         this.#ctx.arcTo(x, y, x + width, y, radius);
         this.#ctx.closePath();
         this.#ctx.clip();
-    
+
         this.#ctx.drawImage(img, x, y, width, height);
         this.#ctx.restore();
     }
@@ -96,7 +96,7 @@ class Drawer {
         const gradient = this.#ctx.createLinearGradient(0, startY, 0, endY);
         gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
-    
+
         this.#ctx.fillStyle = gradient;
         this.#ctx.fillRect(0, startY, width, endY - startY);
     }
@@ -115,7 +115,7 @@ class Drawer {
         this.#ctx.closePath();
         this.#ctx.fillStyle = darkMode ? '#1a1d2a' : '#ffffff';
         this.#ctx.fill();
-    
+
         // Load avatar image and draw
         this.#ctx.save();
         this.#ctx.beginPath();
@@ -124,7 +124,7 @@ class Drawer {
         this.#ctx.clip();
         this.#ctx.drawImage(await loadImage(avatar), avatarX + 5, avatarY + 5, avatarSize - 10, avatarSize - 10);
         this.#ctx.restore();
-    
+
         // Draw border around avatar
         this.#ctx.beginPath();
         this.#ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
@@ -147,11 +147,11 @@ class Drawer {
         let line = '';
         let testLine = '';
         let testWidth = 0;
-    
+
         for (let n = 0; n < words.length; n++) {
             testLine += words[n] + ' ';
             testWidth = this.#ctx.measureText(testLine).width;
-    
+
             if (testWidth > maxWidth && n > 0) {
                 this.#ctx.fillText(line, x, y);
                 line = words[n] + ' ';
@@ -161,7 +161,7 @@ class Drawer {
                 line = testLine;
             }
         }
-    
+
         this.#ctx.fillText(line, x, y);
     }
 
@@ -187,7 +187,7 @@ class Drawer {
         const minFontSize = 25;
         const threshold = 100;
         const maxCharCount = 200;
-    
+
         if (charCount <= threshold) {
             return maxFontSize;
         } else {
@@ -197,10 +197,13 @@ class Drawer {
         }
     }
 
+    /**
+     * Load the font for the drawer
+     */
     static loadFont() {
         try {
-            GlobalFonts.registerFromPath(path.join(__dirname, 'assets', 'fonts', 'Helvetica.ttf'), 'Helvetica');
-            GlobalFonts.registerFromPath(path.join(__dirname, 'assets', 'fonts', 'Helvetica-Bold.ttf'), 'Helvetica-Bold');
+            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', '..', 'assets', 'fonts', 'Helvetica.ttf'), 'Helvetica'),
+            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', '..', 'assets', 'fonts', 'Helvetica-Bold.ttf'), 'Helvetica-Bold')
         } catch (error) {
             throw new Error(`Failed to load font: ${error}`);
         }

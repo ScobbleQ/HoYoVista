@@ -1,6 +1,6 @@
 {
   "name": "hoyovista",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Empower your HoYoverse experience with this HoYoLAB Bot! Access all the HoYoLAB features right from Discord, including daily check-ins, viewing profiles, and more!",
   "main": "index.js",
   "scripts": {
