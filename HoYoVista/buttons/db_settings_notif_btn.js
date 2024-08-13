@@ -12,6 +12,6 @@ module.exports = {
         const currentNotifPreference = await mongo.getUserPreference("settings.checkinNotif");
         await mongo.setUserPreference("settings.checkinNotif", !currentNotifPreference);
 
-        await settings.execute(interaction, dbClient, true);
+        await settings.execute(interaction, dbClient, true, 2);
     },
 }

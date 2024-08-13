@@ -12,6 +12,6 @@ module.exports = {
         const currentDisplayPreference = await mongo.getUserPreference("settings.darkMode");
         await mongo.setUserPreference("settings.darkMode", !currentDisplayPreference);
 
-        await settings.execute(interaction, dbClient, true);
+        await settings.execute(interaction, dbClient, true, 2);
     },
 }

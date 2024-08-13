@@ -50,52 +50,26 @@ module.exports = {
 			}
 		} else if (interaction.isButton()) {
 			if (interaction.message.interaction.user.id !== interaction.user.id) {
-                return interaction.reply({ content: 'You are not allowed to interact with this button.', ephemeral: true });
-            }
-
-            const buttonId = interaction.customId;
-			
-			if (buttonId.startsWith('db_unlink_hyl_')) {
-				const idParts = buttonId.replace('db_unlink_hyl_', '').split('_');
-
-				if (idParts.length === 1) {
-					await MongoDB.deleteUser(dbClient, idParts[0]);
-
-					await interaction.message.edit({ 
-						embeds: [new EmbedBuilder()
-							.setColor(config.embedColors.success)
-							.setTitle('HoYoLAB Data Unlinked')
-							.setDescription('Your HoYoLAB data has been successfully unlinked.')
-						], 
-						components: []
-					});
-				} else if (idParts.length === 2) {
-					const [discordId, gameName] = idParts;
-					await MongoDB.deleteGame(dbClient, discordId, gameName);
-
-					await account.execute(interaction, dbClient, true);
-
-					await interaction.followUp({ 
-						embeds: [new EmbedBuilder()
-							.setColor(config.embedColors.success)
-							.setTitle('Game Data Unlinked')
-							.setDescription(`Your data for \`${gameName}\` has been successfully unlinked.`)
-						], 
-						ephemeral: true
-					});
+				return interaction.reply({ content: 'You are not allowed to interact with this button.', ephemeral: true });
+			}
+		
+			const buttonId = interaction.customId;
+			const specialHandlerMap = {
+				'db_unlink_hyl': 'db_unlink_hyl',
+				'db_settings_page': 'db_settings_page'
+			};
+		
+			const handlerKey = Object.keys(specialHandlerMap).find(prefix => buttonId.startsWith(prefix));
+			const handler = handlerKey ? buttonHandlers.get(specialHandlerMap[handlerKey]) : buttonHandlers.get(buttonId);
+		
+			if (handler) {
+				try {
+					await handler.execute(interaction, dbClient, buttonId);
+				} catch (error) {
+					console.error(`\x1b[31m[ERROR]\x1b[0m ${error} trying to execute handler for ${buttonId}`);
 				}
 			} else {
-				const handler = buttonHandlers.get(buttonId);
-
-				if (handler) {
-					try {
-						await handler.execute(interaction, dbClient);
-					} catch (error) {
-						console.error(`\x1b[31m[ERROR]\x1b[0m ${error} trying to execute handler for ${buttonId}`);
-					}
-				} else {
-					console.error(`\x1b[31m[ERROR]\x1b[0m No handler found for buttonId: ${buttonId}`);
-				}
+				console.error(`\x1b[31m[ERROR]\x1b[0m No handler found for buttonId: ${buttonId}`);
 			}
 		} else if (interaction.isStringSelectMenu()) {
 			const selection = interaction.values[0];

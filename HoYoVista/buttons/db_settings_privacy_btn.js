@@ -12,6 +12,6 @@ module.exports = {
         const currentPrivacyPreference = await mongo.getUserPreference("settings.isPrivate");
         await mongo.setUserPreference("settings.isPrivate", !currentPrivacyPreference);
 
-        await settings.execute(interaction, dbClient, true);
+        await settings.execute(interaction, dbClient, true, 2);
     },
 }
