@@ -56,7 +56,8 @@ module.exports = {
 			const buttonId = interaction.customId;
 			const specialHandlerMap = {
 				'db_unlink_hyl': 'db_unlink_hyl',
-				'db_settings_page': 'db_settings_page'
+				'db_settings_page': 'db_settings_page',
+				'db_auto': 'db_auto',
 			};
 		
 			const handlerKey = Object.keys(specialHandlerMap).find(prefix => buttonId.startsWith(prefix));

@@ -322,8 +322,8 @@ class HoYoLAB {
     
             await Promise.all(usersWithAutoCheckin.map(async (user) => {
                 const { ltoken_v2, ltuid_v2 } = user.hoyolab;
+                const { checkinNotif } = user.settings;
                 const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2);
-                const notify = await MongoDB.getUserPreference(dbClient, user.id, "hoyolab.checkinNotif");
     
                 await Promise.all(Object.entries(user.linkedGamesList).map(async ([game, gameData]) => {
                     if (gameData.auto_checkin) {
@@ -350,14 +350,14 @@ class HoYoLAB {
                                 .setDescription(status.message);
                         }
 
-                        if (notify || status.retcode !== 0) {
+                        if (checkinNotif || status.retcode !== 0) {
                             await client.users.send(user.id, { embeds: [checkinEmbed] });
                         }
                     }
                 }));
             }));
         } catch (error) {
-            console.error(`\x1b[31m[ERROR]\x1b[0m ${error}`);
+            throw new Error(`Error during auto check-in: ${error}`);
         }
     }
 }

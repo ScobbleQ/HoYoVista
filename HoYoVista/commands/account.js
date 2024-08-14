@@ -8,12 +8,12 @@ module.exports = {
         .setDescription('Manage your HoYoLAB account'),
     async execute(interaction, dbClient, update = false) {
         const mongo = new MongoDB(dbClient, interaction.user.id);
-
         const user = await mongo.getUserData();
+
         if (!user) {
-            const NAF_Embed = new EmbedBuilder()
+            const embed = new EmbedBuilder()
                 .setTitle('Account Manager')
-                .setDescription('You don\'t have a HoYoLAB account linked yet.')
+                .setDescription('You don\'t have a HoYoLAB account linked yet. Press the button below to get started.')
                 .setColor(embedColors.error);
 
             const addButton = new ButtonBuilder()
@@ -21,10 +21,17 @@ module.exports = {
                 .setLabel('Add HoYoLAB Account')
                 .setStyle(ButtonStyle.Primary);
 
-            const row = new ActionRowBuilder().addComponents(addButton);
-
-            return interaction.reply({ embeds: [NAF_Embed], components: [row], ephemeral: true });
+            return await interaction.reply({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(addButton)],
+                ephemeral: true,
+            });
         }
+
+        const embed = new EmbedBuilder()
+            .setTitle('Account Manager')
+            .setDescription('The following games were fetched from your HoYoLAB account~\n`Unlink`: Deletes all your HoYoLAB data.\n`Delete Message`: Deletes this message.')
+            .setColor(embedColors.default);
 
         const games = {
             'genshin': 'Genshin Impact',
@@ -33,50 +40,38 @@ module.exports = {
             'zzz': 'Zenless Zone Zero'
         };
 
-        const embed = new EmbedBuilder()
-            .setTitle('Account Manager')
-            .setDescription('The following games were found linked to your HoYoLAB:\n`Relink`: Removed accounts will be added back.\n`Unlink`: Deletes all your HoYoLAB data from our database.\n`Delete Message`: Deletes this message.\n`Game Names`: Deletes specific game account from our database.')
-            .setColor(embedColors.default);
-
-        const unlinkButtons = Object.entries(user.linkedGamesList).map(([gameName, gameData]) => {
-            embed.addFields({
-                name: `${games[gameName]}`,
-                value: `${gameData.nickname} | Lv. ${gameData.level}\n${gameData.uid}\n${gameData.region_name}`,
-                inline: true
-            });
-
-            return new ButtonBuilder()
-                .setCustomId(`db_unlink_hyl_${interaction.user.id}_${gameName}`)
-                .setLabel(`${games[gameName]}`)
-                .setStyle(ButtonStyle.Secondary);
-        });
-
-        const relinkButton = new ButtonBuilder()
-            .setCustomId('hyl_relink_acc_btn')
-            .setLabel('Relink')
-            .setStyle(ButtonStyle.Primary);
+        for (const [gameName, gameData] of Object.entries(user.linkedGamesList)) {
+            if (gameName !== 'db') {
+                embed.addFields({
+                    name: games[gameName],
+                    value: `${gameData.nickname} | Lv. ${gameData.level}\nUID: ${gameData.uid}\n${gameData.region_name}`,
+                    inline: true,
+                });
+            }
+        }
 
         const unlinkButton = new ButtonBuilder()
             .setCustomId(`db_unlink_hyl_${interaction.user.id}`)
             .setLabel('Unlink')
-            .setStyle(ButtonStyle.Secondary);
+            .setStyle(ButtonStyle.Primary);
 
-        const deleteButton = new ButtonBuilder()
-            .setCustomId('delete_button')
-            .setLabel('Delete Message')
-            .setStyle(ButtonStyle.Danger);
+        const actionRow = new ActionRowBuilder().addComponents(unlinkButton);
 
-        const rows = [
-            new ActionRowBuilder().addComponents(relinkButton, unlinkButton, deleteButton),
-            new ActionRowBuilder().addComponents(...unlinkButtons)
-        ];
-
-        const isPrivate = await mongo.getUserPreference("settings.isPrivate");
-        const responseOptions = { embeds: [embed], components: rows, ephemeral: isPrivate };
-
-        if (update) {
-            return interaction.update(responseOptions);
+        if (!user.settings.isPrivate) {
+            actionRow.addComponents(
+                new ButtonBuilder()
+                    .setCustomId('delete_button')
+                    .setLabel('Delete Message')
+                    .setStyle(ButtonStyle.Danger)
+            );
         }
-        await interaction.reply(responseOptions);
+
+        const responseOptions = {
+            embeds: [embed],
+            components: [actionRow],
+            ephemeral: user.settings.isPrivate,
+        };
+
+        update ? await interaction.update(responseOptions) : await interaction.reply(responseOptions);
     },
 };

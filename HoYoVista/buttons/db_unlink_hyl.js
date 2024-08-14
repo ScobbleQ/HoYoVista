@@ -1,4 +1,7 @@
-const settings = require('../commands/settings');
+const { EmbedBuilder } = require('discord.js');
+const { MongoDB } = require('../utils/class/mongo');
+const { embedColors } = require('../../config');
+const account = require('../commands/account');
 
 module.exports = {
     data: {
@@ -6,14 +9,14 @@ module.exports = {
         description: 'Unlink your HoYoLAB account',
     },
     async execute(interaction, dbClient, buttonId) {
-        const idParts = buttonId.replace('db_unlink_hyl', '').split('_');
+        const idParts = buttonId.replace('db_unlink_hyl_', '').split('_');
 
         if (idParts.length === 1) {
             await MongoDB.deleteUser(dbClient, idParts[0]);
 
             await interaction.message.edit({
                 embeds: [new EmbedBuilder()
-                    .setColor(config.embedColors.success)
+                    .setColor(embedColors.success)
                     .setTitle('HoYoLAB Data Unlinked')
                     .setDescription('Your HoYoLAB data has been successfully unlinked.')
                 ],
@@ -27,7 +30,7 @@ module.exports = {
 
             await interaction.followUp({
                 embeds: [new EmbedBuilder()
-                    .setColor(config.embedColors.success)
+                    .setColor(embedColors.success)
                     .setTitle('Game Data Unlinked')
                     .setDescription(`Your data for \`${gameName}\` has been successfully unlinked.`)
                 ],
