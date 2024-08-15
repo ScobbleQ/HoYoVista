@@ -10,11 +10,11 @@ module.exports = {
 		.setDescription('View your HoYoLAB profile')
 		.addUserOption(option => option
 			.setName('user')
-			.setDescription('The user to view the profile of')
+			.setDescription('The user to view [Does not work in DMs]')
 			.setRequired(false))
 		.addStringOption(option => option
 			.setName('game')
-			.setDescription('The game to view the profile of')
+			.setDescription('The application to view')
 			.setRequired(false)
 			.addChoices(
 				{ name: 'Honkai Impact 3rd', value: 'honkai3rd' },
@@ -23,17 +23,17 @@ module.exports = {
 				{ name: 'Zenless Zone Zero', value: 'zzz' },
 				{ name: 'HoYoLAB', value: 'hyl' })),
 	async execute(interaction, dbClient) {
-		const target = interaction.options.getMember('user') || interaction.user;
+		const target = interaction.options.getMember('user') || interaction.options.getUser('user') || interaction.user;
 		const selectedGame = interaction.options.getString('game') || 'hyl';
 		const mongo = new MongoDB(dbClient, target.id);
 
-		const [userExists, isPrivate, darkMode] = await Promise.all([
-			mongo.checkIfUserExists(),
+		const [user, isPrivate, darkMode] = await Promise.all([
+			mongo.getUserData(),
 			target.id !== interaction.user.id ? mongo.getUserPreference('settings.isPrivate') : false,
 			MongoDB.getUserPreference(dbClient, interaction.user.id, 'settings.darkMode')
 		]);
 
-		if (!userExists) {
+		if (!user) {
 			return await interaction.reply({
 				embeds: [new EmbedBuilder()
 					.setColor(embedColors.error)
@@ -62,7 +62,6 @@ module.exports = {
 			)]
 		});
 
-		const user = await mongo.getUserData();
 		const { ltoken_v2, ltuid_v2 } = user.hoyolab;
 
 		switch (selectedGame) {
@@ -76,8 +75,8 @@ module.exports = {
 				});
 				break;
 			case 'genshin':
-				// const genshinProfile = await createGenshinProfile(dbClient, target.id, darkMode);
-				// await interaction.editReply({ embeds: [genshinProfile.embed], components: [genshinProfile.row], files: [genshinProfile.profileAttachment] });
+				const genshinProfile = await createGenshinProfile(ltoken_v2, ltuid_v2, user.linkedGamesList.genshin, darkMode);				
+				await interaction.editReply({ embeds: [genshinProfile.embed], components: [], files: [genshinProfile.profileAttachment] });
 				break;
 			case 'hkrpg':
 				await interaction.editReply({
@@ -91,11 +90,12 @@ module.exports = {
 			case 'zzz':
 				// const zenlessProfile = await createZenlessProfile(dbClient, target.id, darkMode);
 				// await interaction.editReply({ embeds: [zenlessProfile.embed], components: [zenlessProfile.row], files: [zenlessProfile.profileAttachment] });
+				await interaction.editReply({ embeds: [new EmbedBuilder().setColor(embedColors.error).setDescription('Zenless Zone Zero is under development.')], components: [], files: [] });
 				break;
 			case 'hyl':
 			default:
 				const hoyolabProfile = await createHoyolabProfile(ltoken_v2, ltuid_v2, darkMode);
-				await interaction.editReply({ embeds: [hoyolabProfile.embed], components: [hoyolabProfile.row], files: [hoyolabProfile.profileAttachment] });
+				await interaction.editReply({ embeds: [hoyolabProfile.embed], components: [], files: [hoyolabProfile.profileAttachment] });
 				break;
 		}
 	},

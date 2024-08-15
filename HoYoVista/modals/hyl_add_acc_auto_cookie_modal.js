@@ -20,15 +20,8 @@ module.exports = {
             components: []
         });
 
-        if (await mongo.checkIfUserExists()) {
-            await interaction.deleteReply();
-            return await interaction.followUp({
-                embeds: [new EmbedBuilder()
-                    .setColor(embedColors.error)
-                    .setDescription('You already have a HoYoLAB account linked.')
-                ],
-                ephemeral: true
-            });
+        if (await mongo.getUserData()) {
+            mongo.deleteUser();
         }
 
         const { ltoken_v2, ltuid_v2 } = HoYoLAB.parseCookies(cookies);
@@ -47,7 +40,18 @@ module.exports = {
         await mongo.registerUser(ltoken_v2, ltuid_v2);
 
         const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2);
-        await hoyolab.initBasicGameData();
+        const data = await hoyolab.initBasicGameData();
+        if (data.retcode !== 0) {
+            await interaction.deleteReply();
+            await mongo.deleteUser();
+            return await interaction.followUp({
+                embeds: [new EmbedBuilder()
+                    .setColor(embedColors.error)
+                    .setDescription('Failed to fetch account data. Please try again.')
+                ],
+                ephemeral: true
+            });
+        }
 
         await mongo.updateUserWithGameProfiles(hoyolab.basicGameData);
 

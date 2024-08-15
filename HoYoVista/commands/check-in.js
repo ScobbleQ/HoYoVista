@@ -22,8 +22,9 @@ module.exports = {
     async execute(interaction, dbClient) {
         const selectedGame = interaction.options.getString('game') || 'all';
         const mongo = new MongoDB(dbClient, interaction.user.id);
+        const user = await mongo.getUserData();
 
-        if (!await mongo.checkIfUserExists()) {
+        if (!user) {
             return await interaction.reply({
                 embeds: [new EmbedBuilder()
                     .setColor(embedColors.error)
@@ -35,7 +36,6 @@ module.exports = {
 
         await interaction.deferReply();
 
-        const user = await mongo.getUserData();
         const hoyolab = new HoYoLAB(user.hoyolab.ltoken_v2, user.hoyolab.ltuid_v2);
 
         const gamesToCheck = selectedGame === 'all'
@@ -56,15 +56,6 @@ module.exports = {
         const checkinPromises = gamesToCheck.map(game => hoyolab.checkInGame(game, user, privacy));
         const checkinEmbeds = await Promise.all(checkinPromises);
 
-        await interaction.editReply({ embeds: [checkinEmbeds.shift()] });
-        for (const embed of checkinEmbeds) {
-            if (embed) {
-                if (interaction.inCachedGuild()) {
-                    await interaction.channel.send({ embeds: [embed] });
-                } else {
-                    await interaction.client.users.send(interaction.user.id, { embeds: [embed] });
-                }
-            }
-        }
+        await interaction.editReply({ embeds: checkinEmbeds, ephemeral: privacy });
     },
 };

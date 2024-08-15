@@ -50,21 +50,17 @@ module.exports = {
             }
         }
 
-        const unlinkButton = new ButtonBuilder()
-            .setCustomId(`db_unlink_hyl_${interaction.user.id}`)
-            .setLabel('Unlink')
+        const relinkButton = new ButtonBuilder()
+            .setCustomId('hyl_add_acc_btn')
+            .setLabel('Relink Account')
             .setStyle(ButtonStyle.Primary);
 
-        const actionRow = new ActionRowBuilder().addComponents(unlinkButton);
+        const unlinkButton = new ButtonBuilder()
+            .setCustomId(`db_unlink_hyl_${interaction.user.id}`)
+            .setLabel('Unlink Account')
+            .setStyle(ButtonStyle.Danger);
 
-        if (!user.settings.isPrivate) {
-            actionRow.addComponents(
-                new ButtonBuilder()
-                    .setCustomId('delete_button')
-                    .setLabel('Delete Message')
-                    .setStyle(ButtonStyle.Danger)
-            );
-        }
+        const actionRow = new ActionRowBuilder().addComponents(relinkButton, unlinkButton);
 
         const responseOptions = {
             embeds: [embed],

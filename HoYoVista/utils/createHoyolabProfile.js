@@ -33,7 +33,7 @@ async function renderGames(drawer, games, darkMode, additionalHeightPerGame) {
             drawer.drawRoundedRect(80, y + 100 + (index * 85), canvas.width - 160, 70, 10, darkModeColors.cardBgColor);
 
             ctx.fillStyle = darkModeColors.cardTextColor;
-            ctx.fillText(element.name, 100, y + 145 + (index * 85));
+            ctx.fillText(element.name, 100, y + 146 + (index * 85));
             drawer.rightAlignText(element.value, canvas.width - 100, y + 145 + (index * 85));
         });
 
@@ -106,7 +106,7 @@ async function createHoyolabProfile(ltoken_v2, ltuid_v2, darkMode) {
     ctx.fillText('Likes', 910, 850);
 
     ctx.fillStyle = darkMode ? '#dddddf' : '#262626';
-    ctx.font = '55px Helvetica';
+    ctx.font = '55px Helvetica-Bold';
     drawer.centerText(profile.achieve.post_num.toString(), 175, 780);
     drawer.centerText(profile.achieve.followed_cnt.toString(), 430, 780);
     drawer.centerText(profile.achieve.follow_cnt.toString(), 720, 780);
@@ -118,18 +118,11 @@ async function createHoyolabProfile(ltoken_v2, ltuid_v2, darkMode) {
 
     const embed = new EmbedBuilder()
         .setColor(embedColors.default)
-        .setImage(`attachment://${profile.nickname.replace(' ', '')}.jpeg`)
-        .setFooter({ text: 'Add game parameter to see game profile' });
-
-    const button = new ButtonBuilder()
-        .setCustomId('delete_button')
-        .setLabel('Delete Message')
-        .setStyle(ButtonStyle.Danger);
-    const row = new ActionRowBuilder().addComponents(button);
+        .setImage(`attachment://${profile.nickname.replace(' ', '')}.jpeg`);
 
     const profileAttachment = new AttachmentBuilder(await canvas.encode('jpeg'), { name: `${profile.nickname.replace(' ', '')}.jpeg` });
 
-    return { embed, row, profileAttachment };
+    return { embed, profileAttachment };
 }
 
 module.exports = { createHoyolabProfile };

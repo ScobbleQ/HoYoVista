@@ -22,7 +22,7 @@ module.exports = {
 
 		const embed = new EmbedBuilder()
 			.setColor(embedColors.default)
-			.setTitle(`${interaction.user.id}'s Settings`)
+			.setTitle(`${interaction.user.username} [${interaction.user.id}]`)
 			.setFooter({ text: 'Spamming the buttons may cause unusual changes.' });
 
 		const row = new ActionRowBuilder();
@@ -31,15 +31,13 @@ module.exports = {
 			case 1:
 				embed.setDescription('## Table of Contents ##\nBelow are the available settings you can configure. Select the corresponding button to navigate to the page.')
 					.addFields(
-						{ name: '1. Table of Contents', value: `balh blah blah`, inline: false },
-						{ name: '2. Preferences', value: 'Determines your preferences for the bot.', inline: false },
-						{ name: '3. Auto Check-in', value: 'Configure your auto check-in settings.', inline: false }
+						{ name: '1. Preferences', value: 'Determines your preferences for the bot.', inline: false },
+						{ name: '2. Auto Check-in', value: 'Configure your auto check-in settings.', inline: false }
 					);
 
 				row.addComponents(
-					new ButtonBuilder().setCustomId('db_settings_page_skip_1_btn').setLabel('1').setStyle(ButtonStyle.Secondary).setDisabled(true),
-					new ButtonBuilder().setCustomId('db_settings_page_skip_2_btn').setLabel('2').setStyle(ButtonStyle.Secondary),
-					new ButtonBuilder().setCustomId('db_settings_page_skip_3_btn').setLabel('3').setStyle(ButtonStyle.Secondary)
+					new ButtonBuilder().setCustomId('db_settings_page_skip_2_btn').setLabel('1').setStyle(ButtonStyle.Secondary),
+					new ButtonBuilder().setCustomId('db_settings_page_skip_3_btn').setLabel('2').setStyle(ButtonStyle.Secondary)
 				);
 				break;
 
@@ -98,7 +96,7 @@ module.exports = {
 			new ButtonBuilder().setCustomId(`db_settings_page_next_${page}_btn`).setLabel('Next').setStyle(ButtonStyle.Primary).setDisabled(page === 3)
 		);
 
-		const response = { embeds: [embed], components: [navRow, row], ephemeral: true };
+		const response = { embeds: [embed], components: [navRow, row], ephemeral: user.settings.isPrivate };
 		update ? await interaction.update(response) : await interaction.reply(response);
 	},
 };

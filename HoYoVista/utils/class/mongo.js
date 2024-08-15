@@ -43,25 +43,6 @@ class MongoDB {
     }
 
     /**
-     * Check if the user exists in the database
-     * @returns {Promise<Object>} The user's linked games list
-     */
-    async checkIfUserExists() {
-        try {
-            const database = this.client.db('users');
-            const collection = database.collection('hoyoverse');
-            const user = await collection.findOne({ id: this.#targetID });
-
-            if (user) {
-                return true;
-            }
-            return false;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    /**
      * Register a user in the database with their HoYoLAB credentials
      * @param {string} ltoken_v2 - HoYoLAB ltoken_v2
      * @param {string} ltuid_v2 - HoYoLAB ltuid_v2
