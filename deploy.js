@@ -13,7 +13,13 @@ for (const file of commandFolders) {
     const filePath = path.join(foldersPath, file);
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
-        commands.push(command.data.toJSON());
+		const commandData = command.data.toJSON();
+		const extras = {
+			"integration_types": [0, 1], //0 for guild, 1 for user
+			"contexts": [0, 1, 2], //0 for guild, 1 for app DMs, 2 for GDMs and other DMs
+		};
+		Object.assign(commandData, extras);
+		commands.push(commandData);
 		console.log(`\x1b[32m[Slash Command]\x1b[0m Loaded ${command.data.name}`);
     } else {
         console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
