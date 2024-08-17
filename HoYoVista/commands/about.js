@@ -44,21 +44,28 @@ module.exports = {
                     }
                 );
 
+            const directory = new ButtonBuilder()
+                .setLabel('Directory')
+                .setURL(`https://discord.com/application-directory/${interaction.client.user.id}`)
+                .setStyle(ButtonStyle.Link);
+            const github = new ButtonBuilder()
+                .setLabel('GitHub')
+                .setURL('https://github.com/ScobbleQ/HoYoVista')
+                .setStyle(ButtonStyle.Link);
             const docu = new ButtonBuilder()
-                .setLabel('Documentation')
+                .setLabel('Docs')
                 .setURL('https://xentriom.gitbook.io/hoyovista/')
                 .setStyle(ButtonStyle.Link);
             const inv = new ButtonBuilder()
                 .setLabel('Server')
                 .setURL('https://discord.gg/WATyv9tkFC')
                 .setStyle(ButtonStyle.Link);
-            const row = new ActionRowBuilder().addComponents(docu, inv);
+            const row = new ActionRowBuilder().addComponents(directory, github, docu, inv);
 
             await interaction.reply({ embeds: [aboutEmbed], components: [row] });
         }
         catch (error) {
-            console.error(`\x1b[31m[ERROR]\x1b[0m ${error} @ ${interaction.commandName}.js`);
-            return;
+            throw error;
         }
     },
 }

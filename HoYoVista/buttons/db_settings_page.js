@@ -6,12 +6,16 @@ module.exports = {
         description: 'Navigate between settings pages',
     },
     async execute(interaction, dbClient, buttonId) {
-        const [, , , type, pageStr] = buttonId.split('_');
-        let page = parseInt(pageStr);
+        try {
+            const [, , , type, pageStr] = buttonId.split('_');
+            let page = parseInt(pageStr);
 
-        if (type === 'prev') page--;
-        if (type === 'next') page++;
-        
-        await settings.execute(interaction, dbClient, true, page);
+            if (type === 'prev') page--;
+            if (type === 'next') page++;
+
+            await settings.execute(interaction, dbClient, true, page);
+        } catch (error) {
+            throw error;
+        }
     },
 };

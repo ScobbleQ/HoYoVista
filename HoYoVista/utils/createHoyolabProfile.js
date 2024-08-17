@@ -118,9 +118,9 @@ async function createHoyolabProfile(ltoken_v2, ltuid_v2, darkMode) {
 
     const embed = new EmbedBuilder()
         .setColor(embedColors.default)
-        .setImage(`attachment://${profile.nickname.replace(' ', '')}.jpeg`);
+        .setImage(`attachment://${profile.uid}.jpeg`);
 
-    const profileAttachment = new AttachmentBuilder(await canvas.encode('jpeg'), { name: `${profile.nickname.replace(' ', '')}.jpeg` });
+    const profileAttachment = new AttachmentBuilder(await canvas.encode('jpeg'), { name: `${profile.uid}.jpeg` });
 
     return { embed, profileAttachment };
 }

@@ -4,6 +4,8 @@ module.exports = {
     token: process.env.TOKEN || '',
     clientId: process.env.CLIENT_ID || '',
     clientSecret: process.env.CLIENT_SECRET || '',
+    webhookId: process.env.WEBHOOK_ID || '',
+    webhookToken: process.env.WEBHOOK_TOKEN || '',
     mongoUri: process.env.MONGO_URI || '',
     githubPAT: process.env.GITHUB_PAT || '',
     embedColors: {

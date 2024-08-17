@@ -47,9 +47,9 @@ class MongoDB {
      * @param {string} ltoken_v2 - HoYoLAB ltoken_v2
      * @param {string} ltuid_v2 - HoYoLAB ltuid_v2
      */
-    async registerUser(ltoken_v2, ltuid_v2) {
-        if (!ltoken_v2 || !ltuid_v2) {
-            throw new Error('Missing ltoken_v2 or ltuid_v2');
+    async registerUser(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2) {
+        if (!ltoken_v2 || !ltuid_v2 || !cookie_token_v2) {
+            throw new Error('Missing either ltoken_v2, ltuid_v2, or cookie_token_v2');
         }
 
         try {
@@ -64,8 +64,10 @@ class MongoDB {
                     checkinNotif: true
                 },
                 hoyolab: {
+                    ltmid_v2: ltmid_v2,
                     ltoken_v2: ltoken_v2,
-                    ltuid_v2: ltuid_v2
+                    ltuid_v2: ltuid_v2,
+                    cookie_token_v2: cookie_token_v2
                 }
             });
         } catch (error) {
@@ -264,6 +266,20 @@ class MongoDB {
         }).toArray();
     }
 
+    static async getUsersWithAutoRedeem(client) {
+        const database = client.db('users');
+        const collection = database.collection('hoyoverse');
+
+        return await collection.find({
+            $or: [
+                { "linkedGamesList.genshin.auto_redeem": true },
+                { "linkedGamesList.honkai3rd.auto_redeem": true },
+                { "linkedGamesList.hkrpg.auto_redeem": true },
+                { "linkedGamesList.zzz.auto_redeem": true },
+            ]
+        }).toArray();
+    }
+
     /**
      * Get a user's data from the database
      * @param {*} client - MongoDB client
@@ -278,6 +294,32 @@ class MongoDB {
         const user = await collection.findOne({ id: target }, { projection });
 
         return preferencePath.split('.').reduce((obj, key) => obj && obj[key], user);
+    }
+
+    static async getCachedCodes(client) {
+        const database = client.db('users');
+        const collection = database.collection('data');
+        const documents = await collection.find();
+        const codes = [];
+
+        documents.forEach(doc => {
+            if (doc.codes) {
+                codes.push(doc.code);
+            }
+        });
+
+        return codes;
+    }
+
+    static async updateUserCodes(client, target, game, code) {
+        const database = client.db('users');
+        const collection = database.collection('hoyoverse');
+
+        const updateField = `linkedGamesList.${game}.codes`;
+        await collection.updateOne(
+            { id: target }, 
+            { $push: { [updateField]: code } }
+        );
     }
 }
 
