@@ -1,4 +1,5 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { getAvailableCodes } = require('../getAvailableCodes');
 const config = require('../../../config');
 
 /**
@@ -47,27 +48,25 @@ class MongoDB {
      * @param {string} ltoken_v2 - HoYoLAB ltoken_v2
      * @param {string} ltuid_v2 - HoYoLAB ltuid_v2
      */
-    async registerUser(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2) {
-        if (!ltoken_v2 || !ltuid_v2 || !cookie_token_v2) {
-            throw new Error('Missing either ltoken_v2, ltuid_v2, or cookie_token_v2');
-        }
-
+    async registerUser(stoken, ltoken_v2, ltuid_v2, ltmid_v2) {
         try {
             const database = this.client.db('users');
             const collection = database.collection('hoyoverse');
 
             await collection.insertOne({
                 id: this.#targetID,
+                joinedAt: Date.now(),
                 settings: {
                     darkMode: true,
                     isPrivate: false,
                     checkinNotif: true
                 },
                 hoyolab: {
+                    stoken: stoken,
                     ltmid_v2: ltmid_v2,
                     ltoken_v2: ltoken_v2,
                     ltuid_v2: ltuid_v2,
-                    cookie_token_v2: cookie_token_v2
+                    cookie_token_v2: ""
                 }
             });
         } catch (error) {
@@ -173,6 +172,31 @@ class MongoDB {
                 { "linkedGamesList.zzz.auto_checkin": true },
             ]
         }).toArray();
+    }
+
+    static async setCurrentCodes(dbClient, id) {
+        const newCodes = await getAvailableCodes();
+
+        const database = dbClient.db('users');
+        const collection = database.collection('hoyoverse');
+        const users = await collection.find().toArray();
+
+        await Promise.all(users.map(async (user) => {
+            if (user.id === id) {
+                for (const [game, codes] of Object.entries(newCodes)) {
+                    const updateField = `linkedGamesList.${game}.codes`;
+
+                    if (game === 'honkai3rd' && user.linkedGamesList[game]) {
+                        for (const code of codes) {
+                            await collection.updateOne(
+                                { id: user.id },
+                                { $push: { [updateField]: code } }
+                            );
+                        }
+                    }
+                }
+            }
+        }));
     }
 
     /**
@@ -317,9 +341,54 @@ class MongoDB {
 
         const updateField = `linkedGamesList.${game}.codes`;
         await collection.updateOne(
-            { id: target }, 
+            { id: target },
             { $push: { [updateField]: code } }
         );
+    }
+
+    static async syncCodes(dbClient, allcodes) {
+        const database = dbClient.db('users');
+        const collection = database.collection('hoyoverse');
+        const users = await collection.find().toArray();
+
+        await Promise.all(users.map(async (user) => {
+            for (const [game, codes] of Object.entries(allcodes)) {
+                const updateField = `linkedGamesList.${game}.codes`;
+
+                if (user.linkedGamesList[game]) {
+                    const existingCodes = user.linkedGamesList[game].codes || [];
+                    const matchingCodes = existingCodes.filter(code => codes.includes(code));
+
+                    await collection.updateOne(
+                        { id: user.id },
+                        { $set: { [updateField]: matchingCodes } }
+                    );
+                }
+            }
+        }));
+    }
+
+    static async updateCodeDatabase(dbClient, newCodes) {
+        const database = dbClient.db('users');
+        const collection = database.collection('data');
+        const document = await collection.findOne();
+
+        if (document) {
+            const updatedCodes = { ...document.code };
+
+            for (const game in newCodes) {
+                if (newCodes.hasOwnProperty(game)) {
+                    updatedCodes[game] = [...(updatedCodes[game] || []), ...newCodes[game]];
+                }
+            }
+
+            await collection.updateOne(
+                { _id: document._id },
+                { $set: { code: updatedCodes } }
+            );
+        } else {
+            await collection.insertOne({ code: newCodes });
+        }
     }
 }
 

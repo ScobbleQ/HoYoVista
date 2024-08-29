@@ -5,16 +5,16 @@ const { embedColors } = require('../../config');
 
 module.exports = {
     data: {
-        id: 'hyl_add_acc_manual_cookie_modal',
-        description: 'Add HoYoLAB Account (Manual) with Cookie',
+        id: 'hyl_add_acc_cookies_modal',
+        description: 'Add HoYoLAB Account (Auto)',
     },
     async execute(interaction, dbClient) {
+        let mongo;
+        let registrationSuccess = false;
+
         try {
-            const ltuid_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltuid_v2');
-            const ltmid_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltmid_v2');
-            const ltoken_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_ltoken_v2');
-            const cookie_token_v2 = interaction.fields.getTextInputValue('hyl_acc_cookies_cookie_token_v2');
-            const mongo = new MongoDB(dbClient, interaction.user.id);
+            const cookies = interaction.fields.getTextInputValue('hyl_acc_cookies');
+            mongo = new MongoDB(dbClient, interaction.user.id);
 
             await interaction.update({
                 embeds: [new EmbedBuilder()
@@ -28,9 +28,11 @@ module.exports = {
                 mongo.deleteUser();
             }
 
-            await mongo.registerUser(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2);
+            const { retcode, ltoken_v2, ltuid_v2, ltmid_v2, stoken } = await HoYoLAB.parseCookies(cookies);
 
-            const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2);
+            await mongo.registerUser(stoken, ltoken_v2, ltuid_v2, ltmid_v2);
+
+            const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, ltmid_v2, stoken);
             const data = await hoyolab.initBasicGameData();
             if (data.retcode !== 0) {
                 await interaction.deleteReply();
@@ -45,18 +47,26 @@ module.exports = {
             }
 
             await mongo.updateUserWithGameProfiles(hoyolab.basicGameData);
+            await HoYoLAB.updateCookieToken(dbClient, interaction.user.id);
+            await MongoDB.setCurrentCodes(dbClient, interaction.user.id);
+
+            registrationSuccess = true;
 
             await interaction.deleteReply();
             await interaction.followUp({
                 embeds: [new EmbedBuilder()
                     .setColor(embedColors.success)
                     .setTitle('Account Successfully Registered')
-                    .setDescription('Welcome aboard! To view and manage your account, use `/account`.')
+                    .setDescription('Welcome aboard!\nTo view and manage your account, use `/account`.\nAuto check-in and code redemption are enabled by default.\n\nIf you need to change any settings, use `/settings`.')
                 ],
                 ephemeral: true
             });
         } catch (error) {
             throw error;
+        } finally {
+            if (!registrationSuccess && mongo) {
+                await mongo.deleteUser();
+            }
         }
     },
 }

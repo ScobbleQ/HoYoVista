@@ -7,7 +7,7 @@ module.exports = {
         .setDescription('Give feedback to the bot\'s developer'),
     async execute(interaction) {
         try {
-            const dev = await interaction.client.users.fetch('399617261230358530');
+            const dev = await interaction.client.users.fetch('755897312357777550');
 
             const embed = new EmbedBuilder()
                 .setColor(config.embedColors.default)
@@ -17,7 +17,8 @@ module.exports = {
             const feedbackButton = new ButtonBuilder()
                 .setCustomId('feedback_start')
                 .setLabel('Give Feedback')
-                .setStyle(ButtonStyle.Primary);
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('<:CustomerSurvey:1278461302573891655>');
 
             const row = new ActionRowBuilder().addComponents(feedbackButton);
 

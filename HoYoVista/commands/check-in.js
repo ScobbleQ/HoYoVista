@@ -56,7 +56,6 @@ module.exports = {
             const privacy = await mongo.getUserPreference("settings.isPrivate");
             const checkinPromises = gamesToCheck.map(game => hoyolab.checkInGame(game, user, privacy));
             const checkinEmbeds = await Promise.all(checkinPromises);
-            console.log(checkinEmbeds);
 
             await interaction.editReply({ embeds: checkinEmbeds, ephemeral: privacy });
         } catch (error) {

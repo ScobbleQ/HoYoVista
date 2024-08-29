@@ -16,9 +16,10 @@ module.exports = {
 
 		// Set up the cron jobs
 		const cron = new Cron();
-		cron.addJob('0 */30 * * * *', setPresence, client);
-		cron.addJob('0 */2 * * *', HoYoLAB.autoRedeemCodes, client, dbClient);
-		cron.addJob('5 12 * * *', HoYoLAB.scheduleCheckin, client, dbClient);
+		cron.addJob('0 */30 * * * *', setPresence, client); // Every 30 minutes
+		cron.addJob('0 */2 * * *', HoYoLAB.scheduleRedeemCodes, client, dbClient); // Every 2 hours
+		cron.addJob('0 */23 * * *', HoYoLAB.updateCookieToken, dbClient); // Every 23 hours
+		cron.addJob('5 12 * * *', HoYoLAB.scheduleCheckin, client, dbClient); // 12:05 PM
 		cron.startJobs();
 	},
 }

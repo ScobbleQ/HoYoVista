@@ -1,8 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { MongoDB } = require('../utils/class/mongo');
-const { embedColors } = require('../../config');
 const { HoYoLAB } = require('../utils/class/hoyolab');
-const axios = require('axios');
+const { getAvailableCodes } = require('../utils/getAvailableCodes');
+const { embedColors } = require('../../config');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -11,9 +11,8 @@ module.exports = {
         .addStringOption(option => option
             .setName('game')
             .setDescription('The game to redeem the code for')
-            .setRequired(false)
+            .setRequired(true)
             .addChoices(
-                { name: 'Every Game', value: 'all' },
                 { name: 'Genshin Impact', value: 'genshin' },
                 { name: 'Honkai: Star Rail', value: 'hkrpg' },
                 { name: 'Zenless Zone Zero', value: 'zzz' }))
@@ -23,8 +22,9 @@ module.exports = {
             .setRequired(false)),
     async execute(interaction, dbClient) {
         try {
-            const selectedGame = interaction.options.getString('game') || 'all';
-            let code = interaction.options.getString('code') || [null];
+            const selectedGame = interaction.options.getString('game');
+            let userCode = interaction.options.getString('code') || [null];
+
             const mongo = new MongoDB(dbClient, interaction.user.id);
             const user = await mongo.getUserData();
 
@@ -38,15 +38,32 @@ module.exports = {
                 });
             }
 
+            if (!user.linkedGamesList[selectedGame]) {
+                return await interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(embedColors.error)
+                        .setDescription('You don\'t have this game linked to your HoYoLAB account.')
+                    ],
+                    ephemeral: true,
+                });
+            }
+
             await interaction.deferReply();
-            const { ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2 } = user.hoyolab;
-            const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2);
+            const { ltoken_v2, ltuid_v2, ltmid_v2, stoken } = user.hoyolab;
 
-            const gamesToCheck = selectedGame === 'all'
-                ? Object.keys(user.linkedGamesList).filter(game => game !== 'honkai3rd')
-                : [selectedGame];
+            if (stoken === null && selectedGame !== 'genshin') {
+                return await interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(embedColors.error)
+                        .setDescription('Code redemption for this game is not supported due to how you registered your account. SToken can only be obtained via our iOS method and is required to preform code redemptions for this game. Only Genshin Impact code redemptions are supported without SToken. We are actively working on a solution for this!')
+                    ],
+                    ephemeral: true,
+                });
+            }
 
-            if (!mongo.isGameLinked(gamesToCheck[0])) {
+            const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, ltmid_v2, stoken);
+
+            if (!mongo.isGameLinked(selectedGame)) {
                 return await interaction.editReply({
                     embeds: [new EmbedBuilder()
                         .setColor(embedColors.error)
@@ -56,30 +73,35 @@ module.exports = {
                 });
             }
 
-            const codes = {};
-            if (code.length === 1 && code[0] === null) {
-                const games = ['genshin', 'hkrpg', 'nap'];
+            if (userCode.length === 1 && userCode[0] === null) {
+                userCode = await getAvailableCodes();
 
-                for (const game of games) {
-                    const url = `https://hoyo-codes.seriaati.xyz/codes?game=${game}`;
-                    const data = await axios.get(url);
-                    const gameCodeKey = game === 'nap' ? 'zzz' : game;
-                    codes[gameCodeKey] = data.data.codes.map(codeObj => codeObj.code);
-                }
+                await interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(embedColors.warning)
+                        .setDescription(`Hang on while we check ${userCode[selectedGame].length} code(s)`)
+                    ],
+                });
 
-                for (const [game, gameData] of Object.entries(user.linkedGamesList)) {
-                    if (game === 'genshin' && gameData.auto_redeem) {
-                        const redeemedCodes = Array.isArray(gameData.codes) ? gameData.codes : [];
-                        code = codes[game].filter(code => !redeemedCodes.includes(code));
-                    }
-                }
+                const gameData = user.linkedGamesList[selectedGame];
+                const redeemedCodes = Array.isArray(gameData.codes) ? gameData.codes : [];
+                userCode = {
+                    [selectedGame]: userCode[selectedGame].filter(code => !redeemedCodes.includes(code))
+                };
             } else {
-                code = code.split('|').map(code => code.trim());
+                await interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(embedColors.warning)
+                        .setDescription('Hang on while we try to redeem the code(s)')
+                    ],
+                });
+
+                userCode = { [selectedGame]: userCode.split('|').map(code => code.trim()) };
             }
 
             const privacy = await mongo.getUserPreference("settings.isPrivate");
 
-            if (code.length === 0) {
+            if (!Object.keys(userCode).length || !userCode[selectedGame].length) {
                 return await interaction.editReply({
                     embeds: [new EmbedBuilder()
                         .setColor(embedColors.error)
@@ -89,11 +111,19 @@ module.exports = {
                 });
             }
 
-            const checkinPromises = gamesToCheck.map(game => hoyolab.redeemAllCodes(game, user, privacy, code));
-            const checkinEmbeds = await Promise.all(checkinPromises);
-            const flattenedEmbeds = checkinEmbeds.flat().filter(embed => embed.length > 0);
+            const redeemEmbeds = (await hoyolab.redeemAllCodes(dbClient, user, privacy, userCode)).flat();
 
-            await interaction.editReply({ embeds: flattenedEmbeds, ephemeral: privacy });
+            if (redeemEmbeds.length) {
+                const chunkSize = 10;
+                for (let i = 0; i < redeemEmbeds.length; i += chunkSize) {
+                    const chunk = redeemEmbeds.slice(i, i + chunkSize);
+                    if (i === 0) {
+                        await interaction.editReply({ embeds: chunk, ephemeral: privacy });
+                    } else {
+                        await interaction.followUp({ embeds: chunk, ephemeral: privacy });
+                    }
+                }
+            }
         } catch (error) {
             throw error;
         }

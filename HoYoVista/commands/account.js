@@ -13,14 +13,14 @@ module.exports = {
 
             if (!user) {
                 const embed = new EmbedBuilder()
-                    .setTitle('Account Manager')
-                    .setDescription('You don\'t have a HoYoLAB account linked yet. Press the button below to get started.')
-                    .setColor(embedColors.error);
+                    .setColor(embedColors.error)
+                    .setDescription('No HoYoLAB account linked. Press the button below to get started.');
 
                 const addButton = new ButtonBuilder()
                     .setCustomId('hyl_add_acc_btn')
                     .setLabel('Add HoYoLAB Account')
-                    .setStyle(ButtonStyle.Primary);
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('<:AddUser:1276998947977826365>');
 
                 return await interaction.reply({
                     embeds: [embed],
@@ -54,12 +54,14 @@ module.exports = {
             const relinkButton = new ButtonBuilder()
                 .setCustomId('hyl_add_acc_btn')
                 .setLabel('Relink Account')
-                .setStyle(ButtonStyle.Primary);
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('<:AddLink:1277001741178503190>');
 
             const unlinkButton = new ButtonBuilder()
                 .setCustomId(`db_unlink_hyl_${interaction.user.id}`)
                 .setLabel('Unlink Account')
-                .setStyle(ButtonStyle.Danger);
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('<:BrokenLink:1277001253171363920>');
 
             const actionRow = new ActionRowBuilder().addComponents(relinkButton, unlinkButton);
 

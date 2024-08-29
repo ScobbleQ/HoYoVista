@@ -1,6 +1,8 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { MongoDB } = require('./mongo');
 const axios = require('axios');
+const crypto = require('crypto');
+const { getAvailableCodes } = require('../getAvailableCodes');
 const { embedColors } = require('../../../config');
 
 /**
@@ -10,18 +12,20 @@ class HoYoLAB {
     #ltmid_v2;
     #ltoken_v2;
     #ltuid_v2;
-    #cookie_token_v2;
+    #stoken;
     #basicGameData = {};
 
     /**
      * A class that enables fast communications with miHoYo's servers
      * @param {string} ltoken_v2 - The ltoken_v2 cookie
      * @param {string} ltuid_v2 - The ltuid_v2 cookie
+     * @param {string} ltmid_v2 - The ltmid_v2 cookie
+     * @param {string} stoken - The stoken cookie
      */
-    constructor(ltoken_v2, ltuid_v2, cookie_token_v2, ltmid_v2) {
+    constructor(ltoken_v2, ltuid_v2, ltmid_v2, stoken) {
+        this.#stoken = stoken;
         this.#ltoken_v2 = ltoken_v2;
         this.#ltuid_v2 = ltuid_v2;
-        this.#cookie_token_v2 = cookie_token_v2;
         this.#ltmid_v2 = ltmid_v2;
     }
 
@@ -150,14 +154,6 @@ class HoYoLAB {
         }
     }
 
-    /**
-     * Performs the redeem code action
-     * @param {string} gameName - The name of the game (Abr)
-     * @param {string} uid - The user ID
-     * @param {string} region - The region
-     * @param {string} code - The code to redeem
-     * @returns {Promise<Object>} The redeem status
-     */
     async redeemCode(gameName, uid, region, code) {
         let headers;
 
@@ -195,43 +191,52 @@ class HoYoLAB {
     }
 
     /**
-     * Generates the redeem embed
-     * @param {string} gameName - The name of the game (Abr)
+     * Redeems all the codes
+     * @param {*} dbClient - MongoDB client
      * @param {*} user - The user object
-     * @param {boolean} privacy - The privacy status
-     * @param {string} codes - The codes to redeem
-     * @returns {Promise<EmbedBuilder[]>} The redeem embeds
+     * @param {Boolean} privacy - The privacy status
+     * @param {*} codes - The codes to redeem
+     * @returns {Promise<Array<EmbedBuilder>>} The redemption embeds
      */
-    async redeemAllCodes(gameName, user, privacy, codes) {
+    async redeemAllCodes(dbClient, user, privacy, codes) {
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+        const gameName = Object.keys(codes)[0];
+        const gameCodes = codes[gameName];
+        const embeds = [];
+
         let { nickname, uid, region } = user.linkedGamesList[gameName];
         if (privacy) {
             nickname = HoYoLAB.censorUsername(nickname);
             uid = HoYoLAB.censorUid(uid);
         }
 
-        const embeds = [];
-        for (const code of codes) {
-            if (gameName === 'hkrpg' || gameName === 'zzz') {
-                embeds.push(new EmbedBuilder()
-                    .setColor(embedColors.error)
-                    .setAuthor({ name: `${nickname} (${uid})`, iconURL: await HoYoLAB.getGameUrl(gameName).logo })
-                    .setDescription('Code redemption is not supported for this game. (Yet!)'));
-                continue;
-            }
+        const cookie_token_v2 = gameName === 'genshin' ? null : user.hoyolab.cookie_token_v2;
 
-            const status = await this.redeemCode(gameName, uid, region, code);
+        for (const code of gameCodes) {
+            const status = await HoYoLAB.redeemCode(this.#ltoken_v2, this.#ltmid_v2, this.#ltuid_v2, cookie_token_v2, gameName, uid, region, code);
+
             if (status.retcode === 0) {
                 embeds.push(new EmbedBuilder()
-                    .setColor(embedColors.success)
+                    .setColor(embedColors.default)
                     .setTitle('Code Redeemed')
                     .setAuthor({ name: `${nickname} (${uid})`, iconURL: await HoYoLAB.getGameUrl(gameName).logo })
-                    .setDescription(status.message));
-            } else if (status.retcode === -2003) {
+                    .setDescription(`Code: \`${code}\``)
+                );
+
+                await MongoDB.updateUserCodes(dbClient, user.id, gameName, code);
+            } else {
                 embeds.push(new EmbedBuilder()
                     .setColor(embedColors.error)
                     .setAuthor({ name: `${nickname} (${uid})`, iconURL: await HoYoLAB.getGameUrl(gameName).logo })
-                    .setDescription(status.message));
+                    .setDescription(`Code: \`${code}\`\n` + status.message)
+                );
+
+                if ([-2017, -2018, -2019, -2020, -2006].includes(status.retcode)) {
+                    await MongoDB.updateUserCodes(dbClient, user.id, gameName, code);
+                }
             }
+
+            await delay(5000);
         }
 
         return embeds;
@@ -321,7 +326,8 @@ class HoYoLAB {
                 checkin: `https://sg-hk4e-api.hoyolab.com/event/sol/sign?lang=en-us&act_id=e202102251931481`,
                 index: `https://bbs-api-os.hoyolab.com/game_record/genshin/api/index?server={{server}}&role_id={{uid}}`,
                 rtn: `https://bbs-api-os.hoyolab.com/game_record/app/genshin/api/dailyNote?server={{server}}&role_id={{uid}}`,
-                code: `https://sg-hk4e-api.hoyolab.com/common/apicdkey/api/webExchangeCdkeyHyl?cdkey={{code}}&game_biz=hk4e_global&lang=en&region={{region}}&uid={{uid}}`
+                code: `https://sg-hk4e-api.hoyolab.com/common/apicdkey/api/webExchangeCdkeyHyl`,
+                redemption: `https://genshin.hoyoverse.com/en/gift?code=`
             },
             "Honkai Impact 3rd": {
                 name: `Honkai Impact 3rd`,
@@ -338,7 +344,8 @@ class HoYoLAB {
                 home: `https://sg-public-api.hoyolab.com/event/luna/os/home?lang=en-us&act_id=e202303301540311`,
                 info: `https://sg-public-api.hoyolab.com/event/luna/os/info?lang=en-us&act_id=e202303301540311`,
                 checkin: `https://sg-public-api.hoyolab.com/event/luna/os/sign?lang=en-us&act_id=e202303301540311`,
-                code: `https://sg-hkrpg-api.hoyoverse.com/common/apicdkey/api/webExchangeCdkey?t={{timestamp}}&lang=en&game_biz=hkrpg_global&uid={{uid}}&region={{region}}&cdkey={{code}}`
+                code: `https://sg-hkrpg-api.hoyoverse.com/common/apicdkey/api/webExchangeCdkey`,
+                redemption: `https://hsr.hoyoverse.com/gift?code=`
             },
             "Zenless Zone Zero": {
                 name: `Zenless Zone Zero`,
@@ -347,7 +354,8 @@ class HoYoLAB {
                 home: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/home?lang=en-us&act_id=e202406031448091`,
                 info: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091`,
                 checkin: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/sign?lang=en-us&act_id=e202406031448091`,
-                code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkey?t={{timestamp}}&lang=en&game_biz=nap_global&uid={{uid}}&region={{region}}&cdkey={{code}}`
+                code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkey`,
+                redemption: `https://zenless.hoyoverse.com/redemption?code=`
             }
         };
 
@@ -359,18 +367,98 @@ class HoYoLAB {
      * @param {string} data - The cookie data
      * @returns {Object} The parsed cookies
      */
-    static parseCookies(data) {
+    static async parseCookies(data) {
         const getValue = (str, key) => {
             const match = str.match(new RegExp(`${key}=([^;]+)`));
             return match ? match[1] : null;
         };
 
+        const stoken = getValue(data, 'stoken');
+        const ltmid_v2 = getValue(data, 'ltmid_v2') || getValue(data, 'mid');
+
+        if (stoken) {
+            const { ltoken_v2, ltuid_v2 } = await HoYoLAB.fetch_cookie_with_stoken_v2(stoken, ltmid_v2);
+
+            return {
+                retcode: 0,
+                ltoken_v2: ltoken_v2,
+                ltuid_v2: ltuid_v2,
+                ltmid_v2: ltmid_v2,
+                stoken: stoken
+            };
+        }
+
         const ltoken_v2 = getValue(data, 'ltoken_v2');
         const ltuid_v2 = getValue(data, 'ltuid_v2');
-        const cookie_token_v2 = getValue(data, 'cookie_token_v2');
-        const ltmid_v2 = getValue(data, 'ltmid_v2');
 
-        return { ltoken_v2: ltoken_v2, ltuid_v2: ltuid_v2, cookie_token_v2: cookie_token_v2, ltmid_v2: ltmid_v2 };
+        return {
+            retcode: -1,
+            ltoken_v2: ltoken_v2,
+            ltuid_v2: ltuid_v2,
+            ltmid_v2: ltmid_v2,
+            stoken: stoken
+        };
+    }
+
+    /**
+     * Fetches the cookie data with the stoken
+     * @param {string} stoken - The stoken
+     * @param {string} mid - The mid
+     * @returns {Promise<Object>} The cookie data
+     */
+    static async fetch_cookie_with_stoken_v2(stoken, mid) {
+        const url = 'https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken';
+
+        const headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            "Content-Length": "25",
+            "Content-Type": "application/json",
+            "Cookie": `stoken=${stoken};mid=${mid}`,
+            "DS": HoYoLAB.generateDS(),
+            "Host": "sg-public-api.hoyoverse.com",
+            "User-Agent": "HoYoLAB/18 CFNetwork/1498.700.2 Darwin/23.6.0",
+            "x-rpc-app_id": "c9oqaq3s3gu8",
+            "x-rpc-app_version": "1.5.0",
+            "x-rpc-client_type": "5",
+            "x-rpc-language": "en",
+        };
+
+        const body = { "dst_token_types": [2, 4] };
+
+        const data = await axios.post(url, body, { headers });
+
+        return {
+            retcode: data.data.retcode,
+            ltuid_v2: data.data.data.user_info.aid,
+            ltoken_v2: data.data.data.tokens[0].token,
+            cookie_token_v2: data.data.data.tokens[1].token
+        }
+    }
+
+    /**
+     * Generates the DS
+     * @returns {string} The generated DS
+     */
+    static generateDS() {
+        const salt = 'IZPgfb0dRPtBeLuFkdDznSZ6f4wWt6y2';
+        const date = new Date();
+        const time = Math.floor(date.getTime() / 1000);
+
+        let random = '';
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let i = 0; i < 6; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            random += characters.charAt(randomIndex);
+        }
+
+        const hash = crypto.createHash('md5')
+            .update(`salt=${salt}&t=${time}&r=${random}`)
+            .digest('hex');
+
+        return `${time},${random},${hash}`;
     }
 
     /**
@@ -470,95 +558,106 @@ class HoYoLAB {
         }
     }
 
-    static async redeemCode(ltoken_v2, ltuid_v2, ltmid_v2, cookie_token_v2, game, uid, region, code) {
-        let headers;
+    /**
+     * Redeems the given code
+     * @param {string} ltoken_v2 - The ltoken_v2 cookie
+     * @param {string} ltmid_v2 - The ltmid_v2 cookie
+     * @param {string} ltuid_v2 - The ltuid_v2 cookie
+     * @param {string} cookie_token_v2 - The cookie_token_v2 cookie
+     * @param {string} game - The game to redeem the code for
+     * @param {number} uid - The UID of the user
+     * @param {string} region - The region of the user
+     * @param {string} code - The code to redeem
+     * @returns {Promise<Object>} The redemption status
+     */
+    static async redeemCode(ltoken_v2, ltmid_v2, ltuid_v2, cookie_token_v2, game, uid, region, code) {
+        const url = await HoYoLAB.getGameUrl(game).code;
+
+        const baseHeaders = {
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            Cookie: `account_id_v2=${ltuid_v2}; account_mid_v2=${ltmid_v2}; cookie_token_v2=${cookie_token_v2}; mi18nLang=en-us; ltmid_v2=${ltmid_v2}; ltoken_v2=${ltoken_v2}; ltuid_v2=${ltuid_v2};`
+        };
+
+        let additionalHeaders = {};
+
         switch (game) {
             case 'genshin':
-                headers = {
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'x-rpc-language': 'en-us',
-                    Host: 'sg-hk4e-api.hoyolab.com',
-                    Connection: 'keep-alive',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'User-Agent': 'HoYoLAB/18 CFNetwork/1498.700.2 Darwin/23.6.0',
-                    Referer: 'https://app.hoyolab.com',
-                    'x-rpc-channel': 'appstore',
-                    Accept: '*/*',
-                    Cookie: `ltoken_v2=${ltoken_v2};ltuid_v2=${ltuid_v2}`
+                additionalHeaders = {
+                    "Accept": "application/json, text/plain, */*",
+                    "Host": "sg-hk4e-api.hoyolab.com",
+                    "Referer": "https://app.hoyolab.com",
+                    "x-rpc-channel": "appstore",
+                    "User-Agent": "HoYoLAB/18 CFNetwork/1498.700.2 Darwin/23.6.0"
                 };
                 break;
             case 'hkrpg':
-                headers = {
-                    Accept: '*/*',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    Connection: 'keep-alive',
-                    Cookie: `account_id_v2=${ltuid_v2}; account_mid_v2=${ltmid_v2}; cookie_token_v2=${cookie_token_v2};`,
-                    Host: 'sg-hkrpg-api.hoyoverse.com',
-                    Origin: 'https://hsr.hoyoverse.com',
-                    Referer: 'https://hsr.hoyoverse.com/',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0',
-                    'x-rpc-language': 'en'
+                additionalHeaders = {
+                    "Accept": "*/*",
+                    "Host": "sg-hkrpg-api.hoyoverse.com",
+                    "Origin": "https://hsr.hoyoverse.com",
+                    "Referer": "https://hsr.hoyoverse.com/",
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+                    "x-rpc-language": "en"
                 };
                 break;
             case 'zzz':
-                headers = {
-                    Accept: '*/*',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    Connection: 'keep-alive',
-                    Cookie: `account_id_v2=${ltuid_v2}; account_mid_v2=${ltmid_v2}; cookie_token_v2=${cookie_token_v2};`,
-                    Host: 'public-operation-nap.hoyoverse.com',
-                    Origin: 'https://zenless.hoyoverse.com',
-                    Referer: 'https://zenless.hoyoverse.com/',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0',
-                    'x-rpc-language': 'en'
+                additionalHeaders = {
+                    "Accept": "*/*",
+                    "Host": "public-operation-nap.hoyoverse.com",
+                    "Origin": "https://zenless.hoyoverse.com",
+                    "Referer": "https://zenless.hoyoverse.com/",
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+                    "x-rpc-language": "en"
                 };
                 break;
-        }
+            default:
+                throw new Error('Invalid game');
+        };
 
-        const urlTemplate = await HoYoLAB.getGameUrl(game).code;
-        let url = urlTemplate
-            .replace('{{uid}}', uid || '')
-            .replace('{{region}}', region || '')
-            .replace('{{code}}', code || '');
+        const headers = { ...baseHeaders, ...additionalHeaders };
 
-        if (url.includes('{{timestamp}}')) {
-            url = url.replace('{{timestamp}}', Date.now());
-        }
+        const game_biz = game === 'genshin' ? 'hk4e_global' : game === 'hkrpg' ? 'hkrpg_global' : 'nap_global';
 
-        const data = await axios.get(url, { headers });
+        const params = {
+            t: Date.now(),
+            lang: "en",
+            game_biz: game_biz,
+            uid: uid,
+            region: region,
+            cdkey: code
+        };
+
+        const data = await axios.get(url, { headers, params });
 
         return { retcode: data.data.retcode, message: data.data.message }
     }
 
-    static async autoRedeemCodes(client, dbClient) {
+    /**
+     * Automatically redeems the codes for all users with auto redeem enabled
+     * @param {*} client - Discord client
+     * @param {*} dbClient - MongoDB client
+     * @param {*} codeData - The code data
+     */
+    static async autoRedeemCodes(client, dbClient, codeData) {
         const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-        const games = ['genshin', 'hkrpg', 'nap']
-        const codeData = {};
-
-        for (const game of games) {
-            const url = `https://hoyo-codes.seriaati.xyz/codes?game=${game}`
-            const data = await axios.get(url);
-            const gameCodeKey = game === 'nap' ? 'zzz' : game;
-            codeData[gameCodeKey] = data.data.codes.map(codeObj => codeObj.code);
-        }
-
         const usersWithAutoRedeem = await MongoDB.getUsersWithAutoRedeem(dbClient);
+
         await Promise.all(usersWithAutoRedeem.map(async (user) => {
-            const { ltoken_v2, ltuid_v2, ltmid_v2, cookie_token_v2 } = user.hoyolab;
+            const { stoken, ltoken_v2, ltmid_v2, ltuid_v2, cookie_token_v2 } = user.hoyolab;
             const redeemEmbed = [];
+            const buttons = [];
 
             await Promise.all(Object.entries(user.linkedGamesList).map(async ([game, gameData]) => {
-                if (game === 'genshin') {
-                    if (gameData.auto_redeem) {
-                        const redeemedCodes = Array.isArray(gameData.codes) ? gameData.codes : [];
-                        const newCodes = codeData[game].filter(code => !redeemedCodes.includes(code));
+                if (gameData.auto_redeem) {
+                    const redeemedCodes = Array.isArray(gameData.codes) ? gameData.codes : [];
+                    const newCodes = codeData[game].filter(code => !redeemedCodes.includes(code));
 
-                        if (newCodes.length > 0) {
-                            for (const code of newCodes) {
-                                const status = await HoYoLAB.redeemCode(ltoken_v2, ltuid_v2, ltmid_v2, cookie_token_v2, game, gameData.uid, gameData.region, code);
-
+                    if (newCodes.length >= 0) {
+                        for (const code of newCodes) {
+                            if (game === 'genshin' || (stoken !== null && game !== 'honkai3rd')) {
+                                const status = await HoYoLAB.redeemCode(ltoken_v2, ltmid_v2, ltuid_v2, cookie_token_v2, game, gameData.uid, gameData.region, code);
                                 if (status.retcode === 0) {
                                     redeemEmbed.push(new EmbedBuilder()
                                         .setColor(embedColors.default)
@@ -570,12 +669,28 @@ class HoYoLAB {
                                     await MongoDB.updateUserCodes(dbClient, user.id, game, code);
                                 }
 
-                                // Add to database if claimed or expired
-                                if (status.retcode === -2017 || status.retcode === -2001) {
+                                if ([-2017, -2018, -2019, -2020, -2006].includes(status.retcode)) {
                                     await MongoDB.updateUserCodes(dbClient, user.id, game, code);
                                 }
 
                                 await delay(5000);
+                            } else {
+                                redeemEmbed.push(new EmbedBuilder()
+                                    .setColor(embedColors.default)
+                                    .setTitle('New Codes Available!')
+                                    .setAuthor({ name: `${gameData.nickname} (${gameData.uid})`, iconURL: await HoYoLAB.getGameUrl(game).logo })
+                                    .setDescription(`Code: \`${code}\``)
+                                );
+
+                                if (game !== 'honkai3rd') {
+                                    buttons.push(new ButtonBuilder()
+                                        .setLabel(code)
+                                        .setURL(HoYoLAB.getGameUrl(game).redemption + code)
+                                        .setStyle(ButtonStyle.Link)
+                                    );
+                                }
+
+                                await MongoDB.updateUserCodes(dbClient, user.id, game, code);
                             }
                         }
                     }
@@ -583,9 +698,33 @@ class HoYoLAB {
             }));
 
             if (redeemEmbed.length > 0) {
-                await client.users.send(user.id, { embeds: redeemEmbed });
+                const rows = [];
+                for (let i = 0; i < buttons.length; i += 5) {
+                    const row = new ActionRowBuilder();
+                    buttons.slice(i, i + 5).forEach(button => row.addComponents(button));
+                    rows.push(row);
+                }
+
+                await client.users.send(user.id, {
+                    embeds: redeemEmbed,
+                    components: rows
+                });
             }
         }));
+    }
+
+    /**
+     * Runs the code redemption tasks, and syncs the codes with the database
+     * @param {*} client - Discord client
+     * @param {*} dbClient - MongoDB client
+     */
+    static async scheduleRedeemCodes(client, dbClient) {
+        const newCodes = await getAvailableCodes();
+
+        if (Object.keys(newCodes).length > 0) {
+            await HoYoLAB.autoRedeemCodes(client, dbClient, newCodes);
+            await MongoDB.syncCodes(dbClient, newCodes);
+        }
     }
 
     static async getGameBackground(game) {
@@ -600,6 +739,42 @@ class HoYoLAB {
 
         const gameData = data.data.data.game_list.find(g => g.name === gameName[game]);
         return gameData.bg;
+    }
+
+    /**
+     * Updates the cookie token
+     * @param {*} dbClient - MongoDB client
+     * @param {*} userId - The user ID
+     */
+    static async updateCookieToken(dbClient, userId) {
+        const database = dbClient.db('users');
+        const collection = database.collection('hoyoverse');
+
+        if (userId) {
+            const user = await collection.findOne({ id: userId });
+
+            if (user.hoyolab.stoken) {
+                const { cookie_token_v2 } = await HoYoLAB.fetch_cookie_with_stoken_v2(user.hoyolab.stoken, user.hoyolab.ltmid_v2);
+
+                await collection.updateOne(
+                    { id: userId },
+                    { $set: { "hoyolab.cookie_token_v2": cookie_token_v2 } }
+                );
+            }
+        } else {
+            const users = await collection.find().toArray();
+
+            await Promise.all(users.map(async (user) => {
+                if (user.hoyolab.stoken) {
+                    const { cookie_token_v2 } = await HoYoLAB.fetch_cookie_with_stoken_v2(user.hoyolab.stoken, user.hoyolab.ltmid_v2);
+
+                    await collection.updateOne(
+                        { id: user.id },
+                        { $set: { "hoyolab.cookie_token_v2": cookie_token_v2 } }
+                    );
+                }
+            }));
+        }
     }
 }
 
