@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
-const { HoYoLAB } = require('../utils/class/hoyolab');
-const { MongoDB } = require('../utils/class/mongo');
+const { HoYoLAB } = require('../class/hoyolab');
+const { MongoDB } = require('../class/mongo');
 const { embedColors } = require('../../config');
 
 module.exports = {
@@ -31,7 +31,7 @@ module.exports = {
             const { ltoken_v2, ltuid_v2, ltmid_v2, stoken } = await HoYoLAB.parseCookies(cookies);
 
             await mongo.registerUser(stoken, ltoken_v2, ltuid_v2, ltmid_v2);
-            
+
             const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, ltmid_v2, stoken);
             const data = await hoyolab.initBasicGameData();
 

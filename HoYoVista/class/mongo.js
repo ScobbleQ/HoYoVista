@@ -1,6 +1,6 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const { getAvailableCodes } = require('../getAvailableCodes');
-const config = require('../../../config');
+const { getAvailableCodes } = require('../utils/getAvailableCodes');
+const config = require('../../config');
 
 /**
  * Class to interact with MongoDB

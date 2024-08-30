@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { MongoDB } = require('../utils/class/mongo');
-const { HoYoLAB } = require('../utils/class/hoyolab');
+const { MongoDB } = require('../class/mongo');
+const { HoYoLAB } = require('../class/hoyolab');
 const { getAvailableCodes } = require('../utils/getAvailableCodes');
 const { embedColors } = require('../../config');
 

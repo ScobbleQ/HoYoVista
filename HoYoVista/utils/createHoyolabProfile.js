@@ -1,7 +1,7 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
-const { HoYoLAB } = require('./class/hoyolab');
-const { Drawer } = require('./class/drawer');
+const { HoYoLAB } = require('../class/hoyolab');
+const { Drawer } = require('../class/drawer');
 const { embedColors } = require('../../config');
 
 /**

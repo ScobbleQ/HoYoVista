@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { MongoDB } = require('../utils/class/mongo');
-const { HoYoLAB } = require('../utils/class/hoyolab');
+const { MongoDB } = require('../class/mongo');
+const { HoYoLAB } = require('../class/hoyolab');
 const { embedColors } = require('../../config');
 
 module.exports = {

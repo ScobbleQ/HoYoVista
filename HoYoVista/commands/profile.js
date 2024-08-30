@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
-const { MongoDB } = require('../utils/class/mongo');
+const { MongoDB } = require('../class/mongo');
 const { createHoyolabProfile } = require('../utils/createHoyolabProfile');
 const { createGenshinProfile } = require('../utils/createGenshinProfile');
 const { embedColors } = require('../../config');

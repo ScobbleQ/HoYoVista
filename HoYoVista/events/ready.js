@@ -1,7 +1,7 @@
 const { Events } = require('discord.js');
-const { Cron } = require('../utils/class/cron');
-const { HoYoLAB } = require('../utils/class/hoyolab');
-const { Drawer } = require('../utils/class/drawer');
+const { Cron } = require('../class/cron');
+const { HoYoLAB } = require('../class/hoyolab');
+const { Drawer } = require('../class/drawer');
 const { setPresence } = require('../utils/presence');
 
 module.exports = {

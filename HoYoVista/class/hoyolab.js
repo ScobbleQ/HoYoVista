@@ -2,8 +2,8 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { MongoDB } = require('./mongo');
 const axios = require('axios');
 const crypto = require('crypto');
-const { getAvailableCodes } = require('../getAvailableCodes');
-const { embedColors } = require('../../../config');
+const { getAvailableCodes } = require('../utils/getAvailableCodes');
+const { embedColors } = require('../../config');
 
 /**
  * A class that enables fast communications with miHoYo's servers
