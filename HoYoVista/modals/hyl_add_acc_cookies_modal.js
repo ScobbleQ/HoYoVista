@@ -28,12 +28,13 @@ module.exports = {
                 mongo.deleteUser();
             }
 
-            const { retcode, ltoken_v2, ltuid_v2, ltmid_v2, stoken } = await HoYoLAB.parseCookies(cookies);
+            const { ltoken_v2, ltuid_v2, ltmid_v2, stoken } = await HoYoLAB.parseCookies(cookies);
 
             await mongo.registerUser(stoken, ltoken_v2, ltuid_v2, ltmid_v2);
-
+            
             const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, ltmid_v2, stoken);
             const data = await hoyolab.initBasicGameData();
+
             if (data.retcode !== 0) {
                 await interaction.deleteReply();
                 await mongo.deleteUser();

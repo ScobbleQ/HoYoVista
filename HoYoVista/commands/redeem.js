@@ -49,29 +49,9 @@ module.exports = {
             }
 
             await interaction.deferReply();
+
             const { ltoken_v2, ltuid_v2, ltmid_v2, stoken } = user.hoyolab;
-
-            if (stoken === null && selectedGame !== 'genshin') {
-                return await interaction.editReply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(embedColors.error)
-                        .setDescription('Code redemption for this game is not supported due to how you registered your account. SToken can only be obtained via our iOS method and is required to preform code redemptions for this game. Only Genshin Impact code redemptions are supported without SToken. We are actively working on a solution for this!')
-                    ],
-                    ephemeral: true,
-                });
-            }
-
             const hoyolab = new HoYoLAB(ltoken_v2, ltuid_v2, ltmid_v2, stoken);
-
-            if (!mongo.isGameLinked(selectedGame)) {
-                return await interaction.editReply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(embedColors.error)
-                        .setDescription('You don\'t have this game linked to your HoYoLAB account.')
-                    ],
-                    ephemeral: true,
-                });
-            }
 
             if (userCode.length === 1 && userCode[0] === null) {
                 userCode = await getAvailableCodes();

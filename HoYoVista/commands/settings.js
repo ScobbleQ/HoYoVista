@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, codeBlock } = require('discord.js');
 const { MongoDB } = require('../utils/class/mongo');
+const { HoYoLAB } = require('../utils/class/hoyolab');
 const { embedColors } = require('../../config');
 
 module.exports = {
@@ -23,13 +24,13 @@ module.exports = {
 
 			const embed = new EmbedBuilder()
 				.setColor(embedColors.default)
-				.setTitle(`${interaction.user.username} [${interaction.user.id}]`)
 				.setFooter({ text: 'Spamming the buttons may cause unusual changes.' });
 
 			const row = new ActionRowBuilder();
 
 			switch (page) {
 				case 1:
+					embed.setTitle(`${interaction.user.username} [${interaction.user.id}]`)
 					embed.setDescription('## Table of Contents ##\nBelow are the available settings you can configure. Select the corresponding button to navigate to the page.')
 						.addFields(
 							{ name: '1. Preferences', value: 'Determines your preferences for the bot.', inline: false },
@@ -48,6 +49,7 @@ module.exports = {
 					const privacyPreference = user.settings.isPrivate ? 'Private' : 'Public';
 					const notifPreference = user.settings.checkinNotif ? 'Enabled' : 'Disabled';
 
+					embed.setTitle(`Preferences`)
 					embed.addFields(
 						{
 							name: 'Display Preference',
@@ -73,7 +75,7 @@ module.exports = {
 					);
 					break;
 				case 3:
-					embed.setDescription('Auto-Checkin Settings');
+					embed.setTitle(`Auto Check-in Settings`);
 
 					for (const [key, value] of Object.entries(user.linkedGamesList)) {
 						if (key !== 'db') {
@@ -82,25 +84,28 @@ module.exports = {
 							row.addComponents(
 								new ButtonBuilder()
 									.setCustomId(`db_auto_${key}_${!value.auto_checkin}_btn`)
-									.setLabel(key)
 									.setStyle(ButtonStyle.Secondary)
+									.setEmoji(HoYoLAB.getGameUrl(key).emoji)
 							);
 						}
 					}
 					break;
 				case 4:
-					embed.setDescription('Auto Code Redemption Settings');
+					embed.setTitle(`Auto Code Redemption Settings`);
+					embed.setDescription('Only honkai3rd does not support auto code redemption. You will get a notification instead if a new code is detected.');
 
 					for (const [key, value] of Object.entries(user.linkedGamesList)) {
 						if (key !== 'db') {
 							const autoRedeemStatus = value.auto_redeem ? 'Enabled' : 'Disabled';
-							embed.addFields({ name: key, value: autoRedeemStatus, inline: true });
+
 							row.addComponents(
 								new ButtonBuilder()
 									.setCustomId(`db_redeem_${key}_${!value.auto_redeem}_btn`)
-									.setLabel(key)
 									.setStyle(ButtonStyle.Secondary)
+									.setEmoji(HoYoLAB.getGameUrl(key).emoji)
 							);
+
+							embed.addFields({ name: key, value: autoRedeemStatus, inline: true });
 						}
 					}
 			}

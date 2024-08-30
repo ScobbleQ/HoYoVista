@@ -28,7 +28,7 @@ module.exports = {
             .setEmoji('<:Comments:1276999972172206111>');
 
         const web = new ButtonBuilder()
-            .setLabel('Web')
+            .setLabel('Browser')
             .setCustomId('web_button')
             .setStyle(ButtonStyle.Secondary)
             .setEmoji('<:Web:1276994993092952155>')

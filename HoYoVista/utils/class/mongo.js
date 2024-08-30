@@ -66,7 +66,7 @@ class MongoDB {
                     ltmid_v2: ltmid_v2,
                     ltoken_v2: ltoken_v2,
                     ltuid_v2: ltuid_v2,
-                    cookie_token_v2: ""
+                    cookie_token_v2: null
                 }
             });
         } catch (error) {

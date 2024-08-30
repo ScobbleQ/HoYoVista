@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const { MongoDB } = require('../utils/class/mongo');
+const { HoYoLAB } = require('../utils/class/hoyolab');
 const { embedColors } = require('../../config');
 
 module.exports = {
@@ -31,7 +32,7 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setTitle('Account Manager')
-                .setDescription('The following games were fetched from your HoYoLAB account~\n`Unlink`: Deletes all your HoYoLAB data.\n`Delete Message`: Deletes this message.')
+                .setDescription('The following games were fetched from your HoYoLAB account~\n`Relink`: Relink an your Discord to another HoYoLAB account.\n`Unlink`: Deletes the data from our database and removes your account.')
                 .setColor(embedColors.default);
 
             const games = {
@@ -44,7 +45,7 @@ module.exports = {
             for (const [gameName, gameData] of Object.entries(user.linkedGamesList)) {
                 if (gameName !== 'db') {
                     embed.addFields({
-                        name: games[gameName],
+                        name: HoYoLAB.getGameUrl(gameName).emoji + " " + games[gameName],
                         value: `${gameData.nickname} | Lv. ${gameData.level}\nUID: ${gameData.uid}\n${gameData.region_name}`,
                         inline: true,
                     });
