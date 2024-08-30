@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
-const { MongoDB } = require('./HoYoVista/utils/class/mongo');
+const { MongoDB } = require('./HoYoVista/class/mongo');
 const config = require('./config');
 
 const client = new Client({

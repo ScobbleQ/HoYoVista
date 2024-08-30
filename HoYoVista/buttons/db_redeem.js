@@ -1,4 +1,4 @@
-const { MongoDB } = require('../utils/class/mongo');
+const { MongoDB } = require('../class/mongo');
 const settings = require('../commands/settings');
 
 module.exports = {

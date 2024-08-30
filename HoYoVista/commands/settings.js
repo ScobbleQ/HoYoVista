@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, codeBlock } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, codeBlock, inlineCode } = require('discord.js');
 const { MongoDB } = require('../class/mongo');
 const { HoYoLAB } = require('../class/hoyolab');
 const { embedColors } = require('../../config');
@@ -22,11 +22,9 @@ module.exports = {
 				});
 			}
 
-			const embed = new EmbedBuilder()
-				.setColor(embedColors.default)
-				.setFooter({ text: 'Spamming the buttons may cause unusual changes.' });
-
+			const embed = new EmbedBuilder().setColor(embedColors.default);
 			const row = new ActionRowBuilder();
+			let description = '';
 
 			switch (page) {
 				case 1:
@@ -76,26 +74,33 @@ module.exports = {
 					break;
 				case 3:
 					embed.setTitle(`Auto Check-in Settings`);
-
+					description = `Auto checkin-in takes place between <t:1704128700:t> and <t:1704132000:t>.\nThe time is adjusted to your local timezone.\n\n`;
+					
 					for (const [key, value] of Object.entries(user.linkedGamesList)) {
 						if (key !== 'db') {
+							const { name, emoji } = await HoYoLAB.getGameUrl(key);
 							const autoCheckinStatus = value.auto_checkin ? 'Enabled' : 'Disabled';
-							embed.addFields({ name: key, value: autoCheckinStatus, inline: true });
+
 							row.addComponents(
 								new ButtonBuilder()
 									.setCustomId(`db_auto_${key}_${!value.auto_checkin}_btn`)
 									.setStyle(ButtonStyle.Secondary)
 									.setEmoji(HoYoLAB.getGameUrl(key).emoji)
 							);
+
+							description += `${emoji} ${name} - ${inlineCode(autoCheckinStatus)}\n`;
 						}
 					}
+
+					embed.setDescription(description);
 					break;
 				case 4:
 					embed.setTitle(`Auto Code Redemption Settings`);
-					embed.setDescription('Only honkai3rd does not support auto code redemption. You will get a notification instead if a new code is detected.');
-
+					description = `Only ${inlineCode("Honkai Impact 3rd")} does **not** support auto code redemption.\nYou will get a notification instead if a new code is detected.\n\n`;
+					
 					for (const [key, value] of Object.entries(user.linkedGamesList)) {
 						if (key !== 'db') {
+							const { name, emoji } = await HoYoLAB.getGameUrl(key);
 							const autoRedeemStatus = value.auto_redeem ? 'Enabled' : 'Disabled';
 
 							row.addComponents(
@@ -105,9 +110,12 @@ module.exports = {
 									.setEmoji(HoYoLAB.getGameUrl(key).emoji)
 							);
 
-							embed.addFields({ name: key, value: autoRedeemStatus, inline: true });
+							description += `${emoji} ${name} - ${inlineCode(autoRedeemStatus)}\n`;
 						}
 					}
+
+					embed.setDescription(description);
+					break;
 			}
 
 			const navRow = new ActionRowBuilder().addComponents(

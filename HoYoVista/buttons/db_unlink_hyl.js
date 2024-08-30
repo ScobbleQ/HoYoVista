@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { MongoDB } = require('../utils/class/mongo');
+const { MongoDB } = require('../class/mongo');
 const { embedColors } = require('../../config');
 const account = require('../commands/account');
 
