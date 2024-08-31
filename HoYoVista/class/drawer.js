@@ -202,8 +202,8 @@ class Drawer {
      */
     static loadFont() {
         try {
-            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', '..', 'assets', 'fonts', 'Helvetica.ttf'), 'Helvetica'),
-            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', '..', 'assets', 'fonts', 'Helvetica-Bold.ttf'), 'Helvetica-Bold')
+            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', 'assets', 'fonts', 'Helvetica.ttf'), 'Helvetica'),
+            GlobalFonts.registerFromPath(path.join(__dirname, '..', '..', 'assets', 'fonts', 'Helvetica-Bold.ttf'), 'Helvetica-Bold')
         } catch (error) {
             throw new Error(`Failed to load font: ${error}`);
         }

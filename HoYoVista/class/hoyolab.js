@@ -540,7 +540,7 @@ class HoYoLAB {
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
             "Connection": "keep-alive",
-            "Cookie": `ltoken_v2=${ltoken_v2}; ltuid_v2=${ltuid_v2};`,
+            "Cookie": `ltoken_v2=${ltoken_v2};ltuid_v2=${ltuid_v2}`,
             "Referer": "https://app.hoyolab.com",
             "x-rpc-channel": "appstore",
             "User-Agent": "HoYoLAB/18 CFNetwork/1498.700.2 Darwin/23.6.0"

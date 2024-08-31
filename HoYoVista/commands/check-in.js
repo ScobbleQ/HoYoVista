@@ -18,7 +18,6 @@ module.exports = {
                 { name: 'Honkai: Star Rail', value: 'hkrpg' },
                 { name: 'Zenless Zone Zero', value: 'zzz' }
             )),
-
     async execute(interaction, dbClient) {
         try {
             const selectedGame = interaction.options.getString('game') || 'all';
