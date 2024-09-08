@@ -207,9 +207,10 @@ function buildGenshinTalentsEmbed(embed, isBeta, data, name, index) {
 
 		if (talent[isBeta ? 'Promote' : 'promote'][primaryIndex]) {
 			details = talent[isBeta ? 'Promote' : 'promote'][primaryIndex];
-		} else if (talent[isBeta ? 'Promote' : 'promote'][fallbackIndex]) {
+		}
+		else if (talent[isBeta ? 'Promote' : 'promote'][fallbackIndex]) {
 			details = talent[isBeta ? 'Promote' : 'promote'][fallbackIndex];
-		} 
+		}
 
 		function formatSkillAttributes(description, params) {
 			return description.map(desc => {
@@ -372,124 +373,141 @@ async function buildGenshinItemReply(interaction, query, category, data) {
 	const embed = new EmbedBuilder().setColor(config.embedColors.default);
 
 	switch (category) {
-		case 'Weapons':
-			const name = isBeta ? '[BETA] ' + data.Name : data.name;
-			const affix = isBeta ? data.Refinement : data.affix[`1${data.id}`];
-			const affixName = isBeta ? affix['1'].Name : affix.name;
-			const affixDescription = Ambr.formatAffixDescription(isBeta, isBeta ? affix : affix.upgrade);
-			const { mainStat, subStat } = await Ambr.getWeaponMainAndSubStat(isBeta, isBeta ? data : data.upgrade);
-			const rarity = isBeta ? data.Rarity : data.rank;
-			const url = isBeta ? 'https://api.hakush.in/gi/UI/' : Ambr.uiIcon;
-			const icon = isBeta ? data.Icon : data.icon;
-			const format = isBeta ? '.webp' : '.png';
-			const description = isBeta ? (data.Desc || 'No description available.') : data.description;
+	case 'Weapons':
+		const name = isBeta ? '[BETA] ' + data.Name : data.name;
+		const affix = isBeta ? data.Refinement : data.affix[`1${data.id}`];
+		const affixName = isBeta ? affix['1'].Name : affix.name;
+		const affixDescription = Ambr.formatAffixDescription(isBeta, isBeta ? affix : affix.upgrade);
+		const { mainStat, subStat } = await Ambr.getWeaponMainAndSubStat(isBeta, isBeta ? data : data.upgrade);
+		const rarity = isBeta ? data.Rarity : data.rank;
+		const url = isBeta ? 'https://api.hakush.in/gi/UI/' : Ambr.uiIcon;
+		const icon = isBeta ? data.Icon : data.icon;
+		const format = isBeta ? '.webp' : '.png';
+		const description = isBeta ? (data.Desc || 'No description available.') : data.description;
 
-			embed.setTitle(name)
-				.setDescription(`**Base ATK**\n${Math.round(mainStat.value)}\n**${subStat.propType}**\n${subStat.value.toFixed(1)}%\n${'<:Star:1279903858763763732>'.repeat(rarity)}\n**${affixName}**\n${affixDescription}`)
-				.setThumbnail(`${url}${icon}${format}`)
-				.setFooter({ text: description });
-			break;
-		case 'Artifacts':
-			embed.setTitle(data.name);
-			embed.setThumbnail(Ambr.uiIcon + 'reliquary/' + data.icon + '.png');
+		embed.setTitle(name)
+			.setDescription(`**Base ATK**\n${Math.round(mainStat.value)}\n**${subStat.propType}**\n${subStat.value.toFixed(1)}%\n${'<:Star:1279903858763763732>'.repeat(rarity)}\n**${affixName}**\n${affixDescription}`)
+			.setThumbnail(`${url}${icon}${format}`)
+			.setFooter({ text: description });
+		break;
+	case 'Artifacts':
+		embed.setTitle(data.name);
+		embed.setThumbnail(Ambr.uiIcon + 'reliquary/' + data.icon + '.png');
 
-			const maxLevel = Math.max(...data.levelList);
-			embed.setDescription('<:Star:1279903858763763732>'.repeat(maxLevel));
+		const maxLevel = Math.max(...data.levelList);
+		embed.setDescription('<:Star:1279903858763763732>'.repeat(maxLevel));
 
-			const affixKeys = Object.keys(data.affixList);
-			for (let i = 0; i < affixKeys.length; i++) {
-				const pieces = i === 0 ? '2-Pieces' : '4-Pieces';
-				embed.addFields({
-					name: `${pieces}`,
-					value: data.affixList[affixKeys[i]],
-				});
+		const affixKeys = Object.keys(data.affixList);
+		for (let i = 0; i < affixKeys.length; i++) {
+			const pieces = i === 0 ? '2-Pieces' : '4-Pieces';
+			embed.addFields({
+				name: `${pieces}`,
+				value: data.affixList[affixKeys[i]],
+			});
+		}
+		break;
+	case 'Materials':
+		embed.setTitle(data.name)
+			.setAuthor({ name: data.type })
+			.setThumbnail(`${Ambr.uiIcon}${data.icon}.png`)
+			.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${data.description.replace(/\\n/g, '\n')}`);
+
+		if (data.recipe) {
+			const recipeLines = Object.values(data.recipe).map(recipeItem => {
+				return Object.values(recipeItem).map(item => `${item.name} x${item.count}`).join(' and ');
+			}).slice(0, 3).join('\n');
+
+			if (recipeLines) {
+				embed.addFields({ name: '**Recipe(s)**', value: recipeLines });
 			}
-			break;
-		case 'Materials':
-			embed.setTitle(data.name)
-				.setAuthor({ name: data.type })
-				.setThumbnail(`${Ambr.uiIcon}${data.icon}.png`)
-				.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${data.description.replace(/\\n/g, '\n')}`);
+		}
 
-			if (data.recipe) {
-				const recipeLines = Object.values(data.recipe).map(recipeItem => {
-					return Object.values(recipeItem).map(item => `${item.name} x${item.count}`).join(' and ');
-				}).slice(0, 3).join('\n');
+		if (data.source) {
+			const sourceLines = data.source.map(src => {
+				const days = src.days ? ` (${src.days})` : '';
+				return `${src.name}${days}`;
+			}).join('\n');
 
-				if (recipeLines) {
-					embed.addFields({ name: '**Recipe(s)**', value: recipeLines });
+			if (sourceLines) {
+				embed.addFields({ name: '**Source(s)**', value: sourceLines });
+			}
+		}
+
+		if (data.recipe || data.source) {
+			embed.setFooter({ text: 'Will only display up to 3 recipes/sources.' });
+		}
+		break;
+	case 'Namecards':
+		embed.setTitle(data.name)
+			.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${data.description.replace(/\\n/g, '\n')}`)
+			.setImage(`${Ambr.uiIcon}/namecard/${data.icon}.png`)
+			.setFooter({ text: data.source });
+		break;
+	case 'Monsters':
+		embed.setTitle(data.name)
+			.setDescription(`${data.type}\n${data.description.replace(/\\n/g, '\n')}`)
+			.setThumbnail(`${Ambr.uiIcon}/monster/${data.icon}.png`);
+
+		const entry = Object.values(data.entries)[0];
+		if (entry.reward) {
+			const rewardsByRank = {};
+
+			for (const reward of Object.values(entry.reward)) {
+				const rank = reward.rank;
+				if (!rewardsByRank[rank]) {
+					rewardsByRank[rank] = [];
 				}
+				rewardsByRank[rank].push(reward.name);
 			}
 
-			if (data.source) {
-				const sourceLines = data.source.map(src => {
-					const days = src.days ? ` (${src.days})` : '';
-					return `${src.name}${days}`;
-				}).join('\n');
+			let rewardString = '';
+			Object.keys(rewardsByRank).sort((a, b) => b - a).forEach(rank => {
+				rewardString += `**Rank ${rank}:** ${rewardsByRank[rank].join(', ')}\n`;
+			});
 
-				if (sourceLines) {
-					embed.addFields({ name: '**Source(s)**', value: sourceLines });
-				}
+			embed.addFields({ name: '**Rewards**', value: rewardString });
+		}
+
+		if (entry.resistance) {
+			let resistanceString = '';
+			for (const [key, value] of Object.entries(entry.resistance)) {
+				resistanceString += `${elements[key]}: ${value * 100}%\n`;
 			}
 
-			if (data.recipe || data.source) {
-				embed.setFooter({ text: 'Will only display up to 3 recipes/sources.' });
-			}
-			break;
-		case 'Namecards':
-			embed.setTitle(data.name)
-				.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${data.description.replace(/\\n/g, '\n')}`)
-				.setImage(`${Ambr.uiIcon}/namecard/${data.icon}.png`)
-				.setFooter({ text: data.source });
-			break;
-		case 'Monsters':
-			embed.setTitle(data.name)
-				.setDescription(`${data.type}\n${data.description.replace(/\\n/g, '\n')}`)
-				.setThumbnail(`${Ambr.uiIcon}/monster/${data.icon}.png`);
+			embed.addFields({ name: '**Resistances**', value: resistanceString });
+		}
 
-			const entry = Object.values(data.entries)[0];
-			if (entry.reward) {
-				const rewardsByRank = {};
+		if (entry.prop) {
 
-				for (const reward of Object.values(entry.reward)) {
-					const rank = reward.rank;
-					if (!rewardsByRank[rank]) {
-						rewardsByRank[rank] = [];
-					}
-					rewardsByRank[rank].push(reward.name);
-				}
+		}
+		break;
+	case 'Furniture':
+		embed.setTitle(data.name)
+			.setAuthor({ name: `${data.categories[0]} | ${data.types[0]}` })
+			.setThumbnail(`${Ambr.uiIcon}furniture/${data.icon}.png`)
+			.setFooter({ text: data.description.replace(/\\n/g, '\n') });
 
-				let rewardString = '';
-				Object.keys(rewardsByRank).sort((a, b) => b - a).forEach(rank => {
-					rewardString += `**Rank ${rank}:** ${rewardsByRank[rank].join(', ')}\n`;
-				});
+		let furnDesc = `${'<:Star:1279903858763763732>'.repeat(data.rank)}\nComfort: ${data.comfort}\n${data.cost ? `Load: ${data.cost}` : ''}`;
 
-				embed.addFields({ name: '**Rewards**', value: rewardString });
+		if (data.recipe) {
+			furnDesc += `\nTrust: ${data.recipe.exp}\nCreation Time: ${data.recipe.time / 3600}h`;
+			let ingredients = '';
+			for (const ingredient of Object.values(data.recipe.input)) {
+				ingredients += `${ingredient.name} x${ingredient.count}\n`;
 			}
 
-			if (entry.resistance) {
-				let resistanceString = '';
-				for (const [key, value] of Object.entries(entry.resistance)) {
-					resistanceString += `${elements[key]}: ${value * 100}%\n`;
-				}
+			embed.addFields({ name: '**Ingrediens**', value: ingredients.trim() });
+		}
+		embed.setDescription(furnDesc);
+		break;
+	case 'Food':
+		embed.setTitle(data.name)
+			.setAuthor({ name: data.type, iconURL: `${Ambr.uiIcon}${data.recipe.effectIcon}.png` })
+			.setThumbnail(`${Ambr.uiIcon}${data.icon}.png`)
+			.setFooter({ text: data.description.replace(/\\n/g, '\n') });
 
-				embed.addFields({ name: '**Resistances**', value: resistanceString });
-			}
-
-			if (entry.prop) {
-
-			}
-			break;
-		case 'Furniture':
-			embed.setTitle(data.name)
-				.setAuthor({ name: `${data.categories[0]} | ${data.types[0]}` })
-				.setThumbnail(`${Ambr.uiIcon}furniture/${data.icon}.png`)
-				.setFooter({ text: data.description.replace(/\\n/g, '\n') });
-
-			let furnDesc = `${'<:Star:1279903858763763732>'.repeat(data.rank)}\nComfort: ${data.comfort}\n${data.cost ? `Load: ${data.cost}` : ''}`;
-
-			if (data.recipe) {
-				furnDesc += `\nTrust: ${data.recipe.exp}\nCreation Time: ${data.recipe.time / 3600}h`;
+		if (data.recipe) {
+			if (data.recipe.input) {
 				let ingredients = '';
 				for (const ingredient of Object.values(data.recipe.input)) {
 					ingredients += `${ingredient.name} x${ingredient.count}\n`;
@@ -497,91 +515,74 @@ async function buildGenshinItemReply(interaction, query, category, data) {
 
 				embed.addFields({ name: '**Ingrediens**', value: ingredients.trim() });
 			}
-			embed.setDescription(furnDesc);
-			break;
-		case 'Food':
-			embed.setTitle(data.name)
-				.setAuthor({ name: data.type, iconURL: `${Ambr.uiIcon}${data.recipe.effectIcon}.png` })
-				.setThumbnail(`${Ambr.uiIcon}${data.icon}.png`)
-				.setFooter({ text: data.description.replace(/\\n/g, '\n') });
 
-			if (data.recipe) {
-				if (data.recipe.input) {
-					let ingredients = '';
-					for (const ingredient of Object.values(data.recipe.input)) {
-						ingredients += `${ingredient.name} x${ingredient.count}\n`;
-					}
-
-					embed.addFields({ name: '**Ingrediens**', value: ingredients.trim() });
+			if (data.recipe.effect) {
+				let effects = '';
+				for (const effect of Object.values(data.recipe.effect)) {
+					const formattedEffect = effect
+						.replace(/<color=[^>]+>/g, '**')
+						.replace(/<\/color>/g, '**');
+					effects += `${formattedEffect}\n`;
 				}
 
-				if (data.recipe.effect) {
-					let effects = '';
-					for (const effect of Object.values(data.recipe.effect)) {
-						const formattedEffect = effect
-							.replace(/<color=[^>]+>/g, '**')
-							.replace(/<\/color>/g, '**');
-						effects += `${formattedEffect}\n`;
-					}
+				embed.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${effects.trim()}`);
+			}
+		}
 
-					embed.setDescription(`${'<:Star:1279903858763763732>'.repeat(data.rank)}\n${effects.trim()}`);
+		if (data.source) {
+			const sourceLines = data.source.map(src => {
+				return src.name;
+			}).join('\n');
+
+			if (sourceLines) {
+				embed.addFields({ name: '**Source(s)**', value: sourceLines });
+			}
+		}
+		break;
+	case 'TCG':
+		const tagsArray = [];
+		for (const [key, value] of Object.entries(data.tags)) {
+			tagsArray.push(`${Gcg[key]} ${value}`);
+		}
+
+		const props = [];
+		for (const [key, value] of Object.entries(data.props)) {
+			props.push(`${Gcg[key]}${value}`);
+		}
+
+		embed.setTitle(data.storyTitle)
+			.setThumbnail(`${Ambr.uiIcon}gcg/${data.icon}.png`)
+			.setDescription(`${tagsArray.join(' **|** ')}\n${props.join(' ')}`)
+			.setFooter({ text: data.storyDetail });
+
+		if (data.talent) {
+			for (const [_, talentData] of Object.entries(data.talent)) {
+				if (!talentData.name || !talentData.description) {
+					continue;
 				}
-			}
 
-			if (data.source) {
-				const sourceLines = data.source.map(src => {
-					return src.name;
-				}).join('\n');
+				const tag = Object.values(talentData.tags)[0];
+				let fieldName = `[${tag}] ${talentData.name} `;
 
-				if (sourceLines) {
-					embed.addFields({ name: '**Source(s)**', value: sourceLines });
-				}
-			}
-			break;
-		case 'TCG':
-			const tagsArray = [];
-			for (const [key, value] of Object.entries(data.tags)) {
-				tagsArray.push(`${Gcg[key]} ${value}`);
-			}
-
-			const props = [];
-			for (const [key, value] of Object.entries(data.props)) {
-				props.push(`${Gcg[key]}${value}`);
-			}
-
-			embed.setTitle(data.storyTitle)
-				.setThumbnail(`${Ambr.uiIcon}gcg/${data.icon}.png`)
-				.setDescription(`${tagsArray.join(' **|** ')}\n${props.join(' ')}`)
-				.setFooter({ text: data.storyDetail });
-
-			if (data.talent) {
-				for (const [_, talentData] of Object.entries(data.talent)) {
-					if (!talentData.name || !talentData.description) {
-						continue;
+				if (talentData.cost) {
+					const costArray = [];
+					for (const [costKey, costValue] of Object.entries(talentData.cost)) {
+						costArray.push(`${Gcg[costKey]}${costValue}`);
 					}
-
-					const tag = Object.values(talentData.tags)[0];
-					let fieldName = `[${tag}] ${talentData.name} `;
-
-					if (talentData.cost) {
-						const costArray = [];
-						for (const [costKey, costValue] of Object.entries(talentData.cost)) {
-							costArray.push(`${Gcg[costKey]}${costValue}`);
-						}
-						fieldName += costArray.join(' ');
-					}
-
-					const description = await Ambr.formatGcgTalentDescription(talentData.description, talentData.params);
-					embed.addFields({ name: fieldName, value: `${description}` });
+					fieldName += costArray.join(' ');
 				}
-			}
 
-			if (data.source) {
-				embed.addFields({ name: 'Source', value: (data.source).replace(/\\n/g, '\n') });
+				const description = await Ambr.formatGcgTalentDescription(talentData.description, talentData.params);
+				embed.addFields({ name: fieldName, value: `${description}` });
 			}
-			break;
-		default:
-			embed.setDescription(`Unable to locate ${query} under ${category} in Genshin Impact`);
+		}
+
+		if (data.source) {
+			embed.addFields({ name: 'Source', value: (data.source).replace(/\\n/g, '\n') });
+		}
+		break;
+	default:
+		embed.setDescription(`Unable to locate ${query} under ${category} in Genshin Impact`);
 	}
 
 	await interaction.editReply({ embeds: [embed] });
