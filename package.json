@@ -1,21 +1,28 @@
 {
   "name": "hoyovista",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "Empower your HoYoverse experience with this HoYoLAB Bot! Access all the HoYoLAB features right from Discord, including daily check-ins, auto code redemptions, and more!",
   "main": "index.js",
   "scripts": {
-    "start": "node deploy.js && node index.js",
+    "start": "node bot/deploy.js && node index.js",
+    "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "xentriom",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.53",
-    "axios": "^1.7.3",
+    "@napi-rs/canvas": "^0.1.55",
+    "axios": "^1.7.7",
     "cron": "^3.1.7",
-    "discord.js": "^14.15.3",
+    "discord.js": "^14.16.1",
     "dotenv": "^16.4.5",
-    "mongodb": "^6.8.0"
+    "mongodb": "^6.8.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.10.0",
+    "eslint": "^9.10.0",
+    "globals": "^15.9.0"
   }
 }
