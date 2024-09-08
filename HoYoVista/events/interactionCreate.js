@@ -1,6 +1,7 @@
 const { Events, Collection, EmbedBuilder } = require('discord.js');
 const buttonHandlers = require('../handlers/buttonHandlerLoader');
 const modalHandlers = require('../handlers/modalHandlerLoader');
+const selectMenuHandlers = require('../handlers/selectmenuHandlerLoader');
 const config = require('../../config');
 
 module.exports = {
@@ -47,12 +48,12 @@ module.exports = {
 			}
 		} else if (interaction.isAutocomplete()) {
 			const command = interaction.client.commands.get(interaction.commandName);
-	
+
 			if (!command) {
 				console.error(`No command matching ${interaction.commandName} was found.`);
 				return;
 			}
-	
+
 			try {
 				await command.autocomplete(interaction);
 			} catch (error) {
@@ -80,7 +81,24 @@ module.exports = {
 				handleError(interaction, error);
 			}
 		} else if (interaction.isStringSelectMenu()) {
+			if (interaction.message.interaction.user.id !== interaction.user.id) {
+				return interaction.reply({ content: 'You are not allowed to interact with this select menu.', ephemeral: true });
+			}
+
 			const selection = interaction.values[0];
+			const specialHandlerMap = {
+				'search': 'search',
+			};
+
+			const handlerKey = Object.keys(specialHandlerMap).find(prefix => selection.startsWith(prefix));
+			const handler = handlerKey ? selectMenuHandlers.get(specialHandlerMap[handlerKey]) : selectMenuHandlers.get(selection);
+
+			try {
+				await handler.execute(interaction, dbClient, selection);
+			}
+			catch (error) {
+				handleError(interaction, error);
+			}
 		} else if (interaction.isModalSubmit()) {
 			const modalId = interaction.customId;
 			const modal = modalHandlers.get(modalId);

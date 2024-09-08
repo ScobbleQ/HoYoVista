@@ -4,6 +4,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { getAvailableCodes } = require('../utils/getAvailableCodes');
 const { embedColors } = require('../../config');
+const { stat } = require('fs');
 
 /**
  * A class that enables fast communications with miHoYo's servers
@@ -624,7 +625,7 @@ class HoYoLAB {
                             await MongoDB.updateUserCodes(dbClient, user.id, game, code);
                         } else {
                             const status = await HoYoLAB.redeemCode(ltoken_v2, ltuid_v2, game, gameData.uid, gameData.region, code);
-                            console.log(user.id, game, code, status.message);
+                            console.log(user.id, game, code, status.retcode, status.message);
                             if (status.retcode === 0) {
                                 redeemEmbed.push(new EmbedBuilder()
                                     .setColor(embedColors.default)
