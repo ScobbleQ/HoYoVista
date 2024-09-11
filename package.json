@@ -1,10 +1,10 @@
 {
   "name": "hoyovista",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "Empower your HoYoverse experience with this HoYoLAB Bot! Access all the HoYoLAB features right from Discord, including daily check-ins, auto code redemptions, and more!",
   "main": "index.js",
   "scripts": {
-    "start": "node bot/deploy.js && node index.js",
+    "start": "node bot/deploy.js && node .",
     "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
