@@ -5,8 +5,8 @@ async function getAvailableCodes() {
 	const codeData = {};
 
 	for (const game of games) {
-		const url = `https://hoyo-codes.seriaati.xyz/codes?game=${game}`;
-		const headers = { 'User-Agent': 'ScobbleQ DiscordBot' };
+		const url = `http://hoyo-codes.seria.moe/codes?game=${game}`;
+		const headers = { 'User-Agent': 'ScobbleQ' };
 
 		const data = await axios.get(url, { headers });
 
