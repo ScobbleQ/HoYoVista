@@ -320,7 +320,7 @@ class HoYoLAB {
                 home: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/home?lang=en-us&act_id=e202406031448091`,
                 info: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091`,
                 checkin: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/sign?lang=en-us&act_id=e202406031448091`,
-                code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkey`,
+                code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkeyHyl`,
                 redemption: `https://zenless.hoyoverse.com/redemption?code=`
             }
         };
