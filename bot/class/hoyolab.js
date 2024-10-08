@@ -4,7 +4,6 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { getAvailableCodes } = require('../utils/getAvailableCodes');
 const { embedColors } = require('../../config');
-const { stat } = require('fs');
 
 /**
  * A class that enables fast communications with miHoYo's servers
@@ -310,7 +309,7 @@ class HoYoLAB {
                 home: `https://sg-public-api.hoyolab.com/event/luna/os/home?lang=en-us&act_id=e202303301540311`,
                 info: `https://sg-public-api.hoyolab.com/event/luna/os/info?lang=en-us&act_id=e202303301540311`,
                 checkin: `https://sg-public-api.hoyolab.com/event/luna/os/sign?lang=en-us&act_id=e202303301540311`,
-                code: `https://sg-hkrpg-api.hoyoverse.com/common/apicdkey/api/webExchangeCdkey`,
+                code: `https://sg-hkrpg-api.hoyolab.com/common/apicdkey/api/webExchangeCdkeyHyl`,
                 redemption: `https://hsr.hoyoverse.com/gift?code=`
             },
             "Zenless Zone Zero": {
