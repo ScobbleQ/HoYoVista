@@ -47,8 +47,17 @@ class Hakushin {
             mappedItems = mappedItems.concat(betaItems);
         }
 
-        // Return item with sorted id
-        return mappedItems.sort((a, b) => Number(a.id) - Number(b.id));
+        // Remove duplicates by using a Map to store unique ids
+        const uniqueItemsMap = new Map();
+        mappedItems.forEach(item => {
+            if (!uniqueItemsMap.has(item.id)) {
+                uniqueItemsMap.set(item.id, item);
+            }
+        });
+
+        // Convert the Map back to an array and sort by id
+        const uniqueItems = Array.from(uniqueItemsMap.values());
+        return uniqueItems.sort((a, b) => Number(a.id) - Number(b.id));
     }
 
     async fetchData(game, category, query) {
