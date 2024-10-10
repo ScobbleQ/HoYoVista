@@ -192,52 +192,56 @@ function buildGenshinSelectionMenu(selection, id, name) {
 
 // Talents
 function buildGenshinTalentsEmbed(embed, id, hakushin, baseUrl, args) {
-	const type = args[0];
-	const index = parseInt(args.slice(1));
-	const skills = hakushin.Skills;
-	const passives = hakushin.Passives;
+	const [type, indexStr] = args;
+	const index = parseInt(indexStr, 10);
+	const { Skills: skills, Passives: passives } = hakushin;
+
 	const targetTalent = type === 's' ? skills[index] : passives[index];
+	const { Name, Icon, Desc } = targetTalent;
 
 	embed.setColor(config.embedColors.default)
-		.setTitle(targetTalent.Name)
-		.setDescription(formatDesc(targetTalent.Desc));
+		.setTitle(Name)
+		.setDescription(formatDesc(Desc));
+
+	const setThumbnailAndImage = (icon) => {
+		embed.setThumbnail(`${baseUrl}/UI/${icon}.webp`)
+			.setImage(fetchAbilityGif(id, icon));
+	};
 
 	if (type === 's') {
-		const { Desc, Icon, Param } = targetTalent.Promote[9];
+		let talentLevel = 10;
+		let promote = targetTalent.Promote[talentLevel - 1];
+		if (!promote) {
+			talentLevel = 1;
+			promote = targetTalent.Promote[0];
+		}
+		const { Desc: promoteDesc, Param } = promote;
 
 		const formatSkillAttributes = (description, params) => {
 			const formatHandlers = {
 				'P': (value) => `${(value * 100).toFixed(0)}%`,
-				'I': (value) => `${Math.round(value)}`,
-				'F1': (value) => `${Math.round(value)}`,
-				'F2': (value) => `${value.toFixed(2)}`,
+				'I': Math.round,
+				'F1': Math.round,
 				'F1P': (value) => `${(value * 100).toFixed(1)}%`,
 				'F2P': (value) => `${(value * 100).toFixed(2)}%`,
 				'DEFAULT': (value) => value
 			};
 
-			return description.map(desc => {
-				const formattedDesc = desc.replace(/{param(\d+):([PFI\d]+)}/g, (match, paramIndex, format) => {
-					const index = parseInt(paramIndex, 10) - 1;
-					const value = params[index];
+			return description.map(desc =>
+				desc.replace(/{param(\d+):([PFI\d]+)}/g, (match, paramIndex, format) => {
+					const value = params[parseInt(paramIndex, 10) - 1];
+					return (formatHandlers[format] || formatHandlers['DEFAULT'])(value);
+				}).replace(/\|/, ': ')
+			).join('\n').trim();
+		};
 
-					const handler = formatHandlers[format] || formatHandlers['DEFAULT'];
-					return handler(value);
-				});
-
-				return formattedDesc.replace(/\|/, ': ');
-			}).join('\n').trim();
-		}
-
-		embed.setThumbnail(`${baseUrl}/UI/${Icon}.webp`)
-			.setImage(fetchCharacterGif(id, Icon))
-			.addFields({ name: 'Skill Attributes (Lv.10)', value: formatSkillAttributes(Desc, Param) });
-	}
-	else if (type === 'p') {
-		embed.setThumbnail(`${baseUrl}/UI/${targetTalent.Icon}.webp`)
-			.setImage(fetchCharacterGif(id, targetTalent.Icon));
+		embed.addFields({
+			name: `Skill Attributes (Lv.${talentLevel})`,
+			value: formatSkillAttributes(promoteDesc, Param)
+		});
 	}
 
+	setThumbnailAndImage(type === 's' ? Icon : targetTalent.Icon);
 	return embed;
 }
 
@@ -250,22 +254,25 @@ function buildGenshinTalentsRow(hakushin, id, args) {
 		.setCustomId('genshin_character_select_talents');
 
 	[...skills, ...passives].map((item, index) => {
-		if (!item.Name) return;
-
 		const isSkill = skills.includes(item);
 		const itemType = isSkill ? 's' : 'p';
 		const itemIndex = isSkill ? skills.indexOf(item) : passives.indexOf(item);
+		let descriptionText = 'Combat Talent';
+
+		if (!isSkill) {
+			descriptionText = item.Unlock === 0 ? 'Passive Talent' : `Ascension Phase ${item.Unlock}`;
+		}
 
 		selectMenu.addOptions(
 			new StringSelectMenuOptionBuilder()
 				.setLabel(item.Name)
-				.setValue(`search_gi_character_${id}_talents_${itemType}${itemIndex}`)
+				.setValue(`SearchJS_gi_character_${id}_talents_${itemType}${itemIndex}`)
+				.setDescription(descriptionText)
 				.setDefault(args === itemType + itemIndex.toString())
 		);
 	});
 
-	row.addComponents(selectMenu);
-	return row;
+	return row.addComponents(selectMenu);
 }
 
 // Cons
@@ -273,11 +280,9 @@ function buildGenshinConstellationsEmbed(embed, hakushin, baseUrl, args) {
 	const constellation = hakushin.Constellations[args];
 	const { Desc, Icon, Name } = constellation;
 
-	embed.setTitle(Name)
+	return embed.setTitle(Name)
 		.setDescription(formatDesc(Desc))
 		.setThumbnail(`${baseUrl}/UI/${Icon}.webp`)
-
-	return embed;
 }
 
 function buildGenshinConstellationRow(hakushin, id, args) {
@@ -294,48 +299,47 @@ function buildGenshinConstellationRow(hakushin, id, args) {
 		});
 	});
 
-	row.addComponents(selectMenu);
-	return row;
+	return row.addComponents(selectMenu);
 }
 
 // Mats
 function buildGenshinAscensionEmbed(embed, hakushin) {
 	const mats = hakushin.Materials;
-    const { Ascensions, Talents } = mats;
+	const { Ascensions, Talents } = mats;
 
-    const aggregateMats = (materialGroups) => {
-        const matMap = new Map();
-        let totalCost = 0;
+	const aggregateMats = (materialGroups) => {
+		const matMap = new Map();
+		let totalCost = 0;
 
-        materialGroups.forEach(group => {
-            group.forEach(entry => {
-                totalCost += entry.Cost;
-                entry.Mats.forEach(mat => {
-                    if (matMap.has(mat.Id)) {
-                        matMap.set(mat.Id, {
-                            Name: mat.Name,
-                            Id: mat.Id,
-                            Count: matMap.get(mat.Id).Count + mat.Count
-                        });
-                    } else {
-                        matMap.set(mat.Id, { Name: mat.Name, Id: mat.Id, Count: mat.Count });
-                    }
-                });
-            });
-        });
+		materialGroups.forEach(group => {
+			group.forEach(entry => {
+				totalCost += entry.Cost;
+				entry.Mats.forEach(mat => {
+					if (matMap.has(mat.Id)) {
+						matMap.set(mat.Id, {
+							Name: mat.Name,
+							Id: mat.Id,
+							Count: matMap.get(mat.Id).Count + mat.Count
+						});
+					} else {
+						matMap.set(mat.Id, { Name: mat.Name, Id: mat.Id, Count: mat.Count });
+					}
+				});
+			});
+		});
 
-        const materials = Array.from(matMap.entries())
-            .sort(([idA], [idB]) => idA - idB)
-            .map(([, mat]) => `${Materials[mat.Id]} ${mat.Name} x${mat.Count}`)
-            .join('\n');
+		const materials = Array.from(matMap.entries())
+			.sort(([idA], [idB]) => idA - idB)
+			.map(([, mat]) => `${Materials[mat.Id]} ${mat.Name} x${mat.Count}`)
+			.join('\n');
 
-        return `${materials}\n${Materials['202']} Mora x${totalCost.toLocaleString()}`;
-    }
+		return `${materials}\n${Materials['202']} Mora x${totalCost.toLocaleString()}`;
+	}
 
-    return embed.addFields(
-        { name: 'Ascension Materials (1-90)', value: aggregateMats([Ascensions]) },
-        { name: 'Talent Level-up Materials (1-10)', value: aggregateMats(Talents) },
-    );
+	return embed.addFields(
+		{ name: 'Ascension Materials (1-90)', value: aggregateMats([Ascensions]) },
+		{ name: 'Talent Level-up Materials (1-10)', value: aggregateMats(Talents) },
+	);
 }
 
 const fetchCharacterGif = (charId, abilityId) => {
