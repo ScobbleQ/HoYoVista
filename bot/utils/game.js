@@ -21,17 +21,21 @@ const Game_Category = Object.freeze({
  *  - {boolean} [italics=true] - If true, replaces <i>text</i> with *text* (markdown italics).
  *  - {boolean} [removeHtml=true] - If true, strips any remaining HTML tags from the string.
  *  - {boolean} [newLines=true] - If true, replaces escaped newline characters (\\n) with actual newlines.
+ *  - {boolean} [bulletPoints=true] - If true, replaces bullet points (·) with markdown list items (- ).
+ *  - {boolean} [limit=false] - If true, limits the string to 150 characters and appends '....' to the end.
  * @returns {string} The formatted string with the applied transformations.
  */
 const formatDesc = (desc, options = {}) => {
-    const defaultOptions = { bold: true, italics: true, removeHtml: true, newLines: true };
+    const defaultOptions = { bold: true, italics: true, removeHtml: true, newLines: true, bulletPoints: true, limit: false };
     const finalOptions = { ...defaultOptions, ...options };
 
     const formatters = {
         bold: (text) => text.replace(/<color=#\w+>(.*?)<\/color>/g, '**$1**'),
         italics: (text) => text.replace(/<\/?i>/gi, '*'),
         removeHtml: (text) => text.replace(/<\/?[^>]+(>|$)/g, ""),
-        newLines: (text) => text.replace(/\\n/g, '\n')
+        newLines: (text) => text.replace(/\\n/g, '\n'),
+        bulletPoints: (text) => text.replace(/·/g, '- '),
+        limit: (text) => text.length > 150 ? text.slice(0, 150).trim() + '....' : text
     };
 
     for (const [key, applyFormat] of Object.entries(finalOptions)) {

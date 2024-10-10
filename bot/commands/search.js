@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 const { Hakushin, LinkBuilder } = require('../class/hakushin');
-const { elements, Gcg } = require('../utils/emojis');
+const { elements, Gcg, Materials } = require('../utils/emojis');
 const config = require('../../config');
 const { Game, Game_Category, formatDesc, formatVision, formatWeapon, formatRegion } = require('../utils/game');
 
@@ -104,7 +104,7 @@ async function buildGenshinCharacterReply(interaction, baseUrl, hakushin, id, se
 		embed = await buildGenshinOverviewEmbed(embed, hakushin, baseUrl);
 	}
 	else if (selection === 'talents') {
-		embed = buildGenshinTalentsEmbed(embed, hakushin, baseUrl, args[0]);
+		embed = buildGenshinTalentsEmbed(embed, id, hakushin, baseUrl, args[0]);
 		additionalActionRow = buildGenshinTalentsRow(hakushin, id, args[0]);
 	}
 	else if (selection === 'constellations') {
@@ -155,7 +155,7 @@ async function buildGenshinOverviewEmbed(embed, data, baseUrl) {
 			}
 		)
 		.setImage(`${baseUrl}/UI/UI_Gacha_AvatarImg_${(data.Icon).split("_")[2]}.webp`)
-		.setFooter({ text: quote ? formatDesc(quote.Text, { bold: false }) : 'No quotes available.' });
+		.setFooter({ text: quote ? formatDesc(quote.Text, { bold: false, limit: true }) : 'No quotes available.' });
 }
 
 // SSM
@@ -191,24 +191,51 @@ function buildGenshinSelectionMenu(selection, id, name) {
 }
 
 // Talents
-function buildGenshinTalentsEmbed(embed, hakushin, baseUrl, args) {
+function buildGenshinTalentsEmbed(embed, id, hakushin, baseUrl, args) {
 	const type = args[0];
 	const index = parseInt(args.slice(1));
 	const skills = hakushin.Skills;
 	const passives = hakushin.Passives;
-
-	let targetTalent = type === 's' ? skills[index] : passives[index];
-	let addon = type === 's' ? '\n\n-# Multipliers for skills will be included in later updates.' : '';
+	const targetTalent = type === 's' ? skills[index] : passives[index];
 
 	embed.setColor(config.embedColors.default)
 		.setTitle(targetTalent.Name)
-		.setDescription(formatDesc(targetTalent.Desc) + addon);
+		.setDescription(formatDesc(targetTalent.Desc));
 
 	if (type === 's') {
-		embed.setThumbnail(`${baseUrl}/UI/${targetTalent.Promote[0].Icon}.webp`);
+		const { Desc, Icon, Param } = targetTalent.Promote[9];
+
+		const formatSkillAttributes = (description, params) => {
+			const formatHandlers = {
+				'P': (value) => `${(value * 100).toFixed(0)}%`,
+				'I': (value) => `${Math.round(value)}`,
+				'F1': (value) => `${Math.round(value)}`,
+				'F2': (value) => `${value.toFixed(2)}`,
+				'F1P': (value) => `${(value * 100).toFixed(1)}%`,
+				'F2P': (value) => `${(value * 100).toFixed(2)}%`,
+				'DEFAULT': (value) => value
+			};
+
+			return description.map(desc => {
+				const formattedDesc = desc.replace(/{param(\d+):([PFI\d]+)}/g, (match, paramIndex, format) => {
+					const index = parseInt(paramIndex, 10) - 1;
+					const value = params[index];
+
+					const handler = formatHandlers[format] || formatHandlers['DEFAULT'];
+					return handler(value);
+				});
+
+				return formattedDesc.replace(/\|/, ': ');
+			}).join('\n').trim();
+		}
+
+		embed.setThumbnail(`${baseUrl}/UI/${Icon}.webp`)
+			.setImage(fetchCharacterGif(id, Icon))
+			.addFields({ name: 'Skill Attributes (Lv.10)', value: formatSkillAttributes(Desc, Param) });
 	}
 	else if (type === 'p') {
-		embed.setThumbnail(`${baseUrl}/UI/${targetTalent.Icon}.webp`);
+		embed.setThumbnail(`${baseUrl}/UI/${targetTalent.Icon}.webp`)
+			.setImage(fetchCharacterGif(id, targetTalent.Icon));
 	}
 
 	return embed;
@@ -223,6 +250,8 @@ function buildGenshinTalentsRow(hakushin, id, args) {
 		.setCustomId('genshin_character_select_talents');
 
 	[...skills, ...passives].map((item, index) => {
+		if (!item.Name) return;
+
 		const isSkill = skills.includes(item);
 		const itemType = isSkill ? 's' : 'p';
 		const itemIndex = isSkill ? skills.indexOf(item) : passives.indexOf(item);
@@ -272,9 +301,43 @@ function buildGenshinConstellationRow(hakushin, id, args) {
 // Mats
 function buildGenshinAscensionEmbed(embed, hakushin) {
 	const mats = hakushin.Materials;
-	const { Ascensions, Talents } = mats;
+    const { Ascensions, Talents } = mats;
 
-	// console.log(Ascensions, Talents);
-	embed.setDescription('Materials will be added in a future update.');
-	return embed;
+    const aggregateMats = (materialGroups) => {
+        const matMap = new Map();
+        let totalCost = 0;
+
+        materialGroups.forEach(group => {
+            group.forEach(entry => {
+                totalCost += entry.Cost;
+                entry.Mats.forEach(mat => {
+                    if (matMap.has(mat.Id)) {
+                        matMap.set(mat.Id, {
+                            Name: mat.Name,
+                            Id: mat.Id,
+                            Count: matMap.get(mat.Id).Count + mat.Count
+                        });
+                    } else {
+                        matMap.set(mat.Id, { Name: mat.Name, Id: mat.Id, Count: mat.Count });
+                    }
+                });
+            });
+        });
+
+        const materials = Array.from(matMap.entries())
+            .sort(([idA], [idB]) => idA - idB)
+            .map(([, mat]) => `${Materials[mat.Id]} ${mat.Name} x${mat.Count}`)
+            .join('\n');
+
+        return `${materials}\n${Materials['202']} Mora x${totalCost.toLocaleString()}`;
+    }
+
+    return embed.addFields(
+        { name: 'Ascension Materials (1-90)', value: aggregateMats([Ascensions]) },
+        { name: 'Talent Level-up Materials (1-10)', value: aggregateMats(Talents) },
+    );
+}
+
+const fetchCharacterGif = (charId, abilityId) => {
+	return `https://raw.githubusercontent.com/ScobbleQ/GenshinAbilityShowcase/main/${charId}/${abilityId}.gif`;
 }
