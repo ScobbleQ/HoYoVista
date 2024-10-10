@@ -26,7 +26,9 @@ module.exports = {
 			.setName('query')
 			.setDescription('The query to search for')
 			.setRequired(true)
-			.setAutocomplete(true)),
+			.setAutocomplete(true))
+		.setIntegrationTypes([0, 1])
+		.setContexts([0, 1, 2]),
 	async autocomplete(interaction) {
 		const game = interaction.options.getString('game');
 		const focusedOption = interaction.options.getFocused(true);
