@@ -144,7 +144,8 @@ class LinkBuilder {
         const urlsToTry = [
             url,
             url.replace('data/', TARGET_ENDPOINT).replace(/\/en\/en\//g, '/en/'),
-            url.replace(this.validGames[this.game], `v2/${this.validGames[this.game]}/`).replace('en/', '')
+            url.replace(this.validGames[this.game], `v2/${this.validGames[this.game]}`).replace('en/', ''),
+            url.replace(this.validGames[this.game], `v2/${this.validGames[this.game]}`)
         ];
 
         for (const currentUrl of urlsToTry) {

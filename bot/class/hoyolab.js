@@ -624,7 +624,6 @@ class HoYoLAB {
                             await MongoDB.updateUserCodes(dbClient, user.id, game, code);
                         } else {
                             const status = await HoYoLAB.redeemCode(ltoken_v2, ltuid_v2, game, gameData.uid, gameData.region, code);
-                            console.log(user.id, game, code, status.retcode, status.message);
                             if (status.retcode === 0) {
                                 redeemEmbed.push(new EmbedBuilder()
                                     .setColor(embedColors.default)
