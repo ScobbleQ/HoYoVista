@@ -74,12 +74,21 @@ class HoYoLAB {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0'
         };
 
+        if (gameName === 'zzz') {
+            Object.assign(headers, {
+                'x-rpc-platform': '4',
+                'x-rpc-signgame': 'zzz'
+            });
+        }
+
+        const requestData = gameName === 'zzz' ? { act_id: 'e202406031448091', lang: 'en-us' } : null;
+
         const url = await HoYoLAB.getGameUrl(gameName);
 
-        const rest = await axios.post(url.checkin, null, { headers });
-        const data = rest.data;
+        const response = await axios.post(url.checkin, requestData, { headers });
+        const { retcode, message } = response.data;
 
-        return { retcode: data.retcode, message: data.message };
+        return { retcode: retcode, message: message };
     }
 
     /**
@@ -108,7 +117,6 @@ class HoYoLAB {
         const homeData = home.data.data;
 
         return {
-            month: homeData.month,
             award: homeData.awards,
             signedDays: infoData.total_sign_day,
             possibleSignedDays: parseInt(infoData.today.split("-")[2])
@@ -131,7 +139,7 @@ class HoYoLAB {
 
         const status = await this.checkin(gameName);
         if (status.retcode === 0) {
-            const { month, award, signedDays, possibleSignedDays } = await this.getCheckinInfo(gameName);
+            const { award, signedDays, possibleSignedDays } = await this.getCheckinInfo(gameName);
 
             const checkinEmbed = new EmbedBuilder()
                 .setColor(embedColors.default)
@@ -319,7 +327,7 @@ class HoYoLAB {
                 logo: `https://hyl-static-res-prod.hoyolab.com/communityweb/business/nap.png`,
                 home: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/home?lang=en-us&act_id=e202406031448091`,
                 info: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091`,
-                checkin: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/sign?lang=en-us&act_id=e202406031448091`,
+                checkin: `https://sg-public-api.hoyolab.com/event/luna/zzz/os/sign`,
                 code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkeyHyl`,
                 redemption: `https://zenless.hoyoverse.com/redemption?code=`
             }
@@ -490,7 +498,7 @@ class HoYoLAB {
                             .setAuthor({ name: `${gameData.nickname} (${gameData.uid})`, iconURL: await HoYoLAB.getGameUrl(game).logo });
 
                         if (status.retcode === 0) {
-                            const { month, award, signedDays, possibleSignedDays } = await hoyolab.getCheckinInfo(game);
+                            const { award, signedDays, possibleSignedDays } = await hoyolab.getCheckinInfo(game);
 
                             checkinEmbed
                                 .setColor(embedColors.default)

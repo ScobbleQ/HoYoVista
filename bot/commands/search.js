@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Hakushin, LinkBuilder } = require('../class/hakushin');
 const { buildGenshinCharacterReply, buildGenshinItemReply } = require('../utils/genshinSearch');
 const config = require('../../config');
-const { Game, Game_Category } = require('../utils/game');
+const { Game, Game_Category, 	 } = require('../utils/game');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -38,7 +38,7 @@ module.exports = {
 			const filtered = choices.filter(choice => choice.toLowerCase().includes(focusedOption.value.toLowerCase()));
 
 			await interaction.respond(
-				filtered.slice(0, 25).map(choice => ({ name: choice, value: choice }))
+				filtered.slice(0, 25).map(choice => ({ name: Readable_Game_Category[choice], value: choice }))
 			);
 		}
 

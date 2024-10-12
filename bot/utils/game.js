@@ -13,6 +13,20 @@ const Game_Category = Object.freeze({
     [Game.ZZZ]: ['item', 'bangboo', 'equipment', 'weapon', 'character']
 });
 
+const Readable_Game_Category = Object.freeze({
+    monster: 'Enemy Creatures',
+    item: 'Inventory Items',
+    artifact: 'Artifacts',
+    weapon: 'Weapons',
+    character: 'Characters',
+    gcg: 'Genius Invocation TCG',
+    furniture: 'Furnishings',
+    relicset: 'Relic Sets',
+    lightcone: 'Lightcones',
+    bangboo: 'Bangboo',
+    equipment: 'W-Engine'
+});
+
 /**
  * Formats a given string by applying various text transformations based on provided options.
  * @param {string} desc - The string to be formatted.
@@ -135,4 +149,4 @@ const formatAcensionStat = (main, sub) => {
     }
 }
 
-module.exports = { Game, Game_Category, formatDesc, formatVision, formatWeapon, formatRegion, formatAcensionStat };
+module.exports = { Game, Game_Category, Readable_Game_Category, formatDesc, formatVision, formatWeapon, formatRegion, formatAcensionStat };

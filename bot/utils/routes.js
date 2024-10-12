@@ -65,16 +65,18 @@ function getEventBaseUrl(game) {
 
 /* Daily Check-In API Endpoint */
 function DAILY_INFO_API(game) {
-    return `${EVENTS[game]}/event/${EVENTS[game]}/info?act_id=${ACT_IDS(game)}`
+    return `${getEventBaseUrl(game)}/event/${EVENTS[game]}/info?lang=en-us&act_id=${ACT_IDS[game]}`
 }
 
 function DAILY_REWARD_API(game) {
-    return `${getEventBaseUrl(game)}/event/${EVENTS[game]}/home?act_id=${ACT_IDS(game)}`
+    return `${getEventBaseUrl(game)}/event/${EVENTS[game]}/home?lang=en-us&act_id=${ACT_IDS[game]}`
 }
 
 function DAILY_CLAIM_API(game) {
-    return `${getEventBaseUrl(game)}/event/${EVENTS[game]}/sign?act_id=${ACT_IDS(game)}`
+    return `${getEventBaseUrl(game)}/event/${EVENTS[game]}/sign?lang=en-us&act_id=${ACT_IDS[game]}`
 }
+
+const CHECKIN_URL = (type, game) => `${getEventBaseUrl(game)}/event/${EVENTS[game]}/${type}?lang=en-us&act_id=${ACT_IDS[game]}`;
 
 module.exports = {
     BBS_API,
@@ -90,6 +92,7 @@ module.exports = {
     EVENTS,
     GEETEST_RECORD_KEYS,
     GAME_BIZS,
+    CHECKIN_URL,
     DAILY_INFO_API,
     DAILY_REWARD_API,
     DAILY_CLAIM_API
