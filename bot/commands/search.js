@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Hakushin, LinkBuilder } = require('../class/hakushin');
 const { buildGenshinCharacterReply, buildGenshinItemReply } = require('../utils/genshinSearch');
 const config = require('../../config');
-const { Game, Game_Category, 	 } = require('../utils/game');
+const { Game, Game_Category, Readable_Game_Category } = require('../utils/game');
 
 module.exports = {
 	data: new SlashCommandBuilder()
