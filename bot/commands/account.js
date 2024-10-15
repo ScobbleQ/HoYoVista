@@ -49,7 +49,7 @@ module.exports = {
 					embed.addFields({
 						name: HoYoLAB.getGameUrl(gameName).emoji + ' ' + games[gameName],
 						value: `${gameData.nickname} (${gameData.uid})\nRegion: ${gameData.region}`,
-						inline: true,
+						inline: false,
 					});
 				}
 			}
