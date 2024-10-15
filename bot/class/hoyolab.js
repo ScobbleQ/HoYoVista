@@ -45,7 +45,6 @@ class HoYoLAB {
             this.#basicGameData[gameAbbr] = {
                 nickname: game.nickname || "Unknown",
                 uid: game.game_role_id,
-                level: game.level,
                 region: game.region,
                 region_name: game.region_name,
                 auto_checkin: true,
@@ -108,12 +107,18 @@ class HoYoLAB {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0'
         };
 
+        if (gameName === 'zzz') {
+            Object.assign(headers, {
+                'x-rpc-signgame': 'zzz'
+            });
+        }
+
         const game = await HoYoLAB.getGameUrl(gameName);
 
         const info = await axios.get(game.info, { headers });
         const infoData = info.data.data;
 
-        const home = await axios.get(game.home);
+        const home = await axios.get(game.home, { headers });
         const homeData = home.data.data;
 
         return {
@@ -325,8 +330,8 @@ class HoYoLAB {
                 abbreviation: `zzz`,
                 emoji: `<:ZenlessZoneZero:1277004094070063134>`,
                 logo: `https://hyl-static-res-prod.hoyolab.com/communityweb/business/nap.png`,
-                home: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/home?lang=en-us&act_id=e202406031448091`,
-                info: `https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091`,
+                home: `https://sg-public-api.hoyolab.com/event/luna/zzz/os/home?lang=en-us&act_id=e202406031448091`,
+                info: `https://sg-public-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091`,
                 checkin: `https://sg-public-api.hoyolab.com/event/luna/zzz/os/sign`,
                 code: `https://public-operation-nap.hoyoverse.com/common/apicdkey/api/webExchangeCdkeyHyl`,
                 redemption: `https://zenless.hoyoverse.com/redemption?code=`

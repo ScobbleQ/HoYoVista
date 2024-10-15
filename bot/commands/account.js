@@ -34,7 +34,7 @@ module.exports = {
 
 			const embed = new EmbedBuilder()
 				.setTitle('Account Manager')
-				.setDescription('The following games were fetched from your HoYoLAB account~\n`Relink`: Relink an your Discord to another HoYoLAB account.\n`Unlink`: Deletes the data from our database and removes your account.')
+				.setDescription('The following game accounts were fetched using your HoYoLAB data~')
 				.setColor(embedColors.default);
 
 			const games = {
@@ -48,7 +48,7 @@ module.exports = {
 				if (gameName !== 'db') {
 					embed.addFields({
 						name: HoYoLAB.getGameUrl(gameName).emoji + ' ' + games[gameName],
-						value: `${gameData.nickname} | Lv. ${gameData.level}\nUID: ${gameData.uid}\n${gameData.region_name}`,
+						value: `${gameData.nickname} (${gameData.uid})\nRegion: ${gameData.region}`,
 						inline: true,
 					});
 				}
