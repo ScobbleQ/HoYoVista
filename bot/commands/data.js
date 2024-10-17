@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, codeBlock } = require('discord.js');
 const { MongoDB } = require('../class/mongo');
 const config = require('../../config');
 
@@ -27,12 +27,12 @@ module.exports = {
 		const embed = new EmbedBuilder()
 			.setColor(config.embedColors.default)
 			.addFields(
-				{ name: '_id', value: '```' + (user._id).toString() + '```', inline: true },
+				{ name: '_id', value: codeBlock(user._id).toString(), inline: true },
 				{ name: 'Joined At', value: `<t:${Math.floor(user.joinedAt / 1000)}:f>`, inline: true },
-				{ name: 'stoken', value: '```' + stoken + '```', inline: false },
-				{ name: 'ltoken_v2', value: '```' + ltoken_v2 + '```', inline: false },
-				{ name: 'ltuid_v2', value: '```' + ltuid_v2 + '```', inline: false },
-				{ name: 'ltmid_v2', value: '```' + ltmid_v2 + '```', inline: false },
+				{ name: 'stoken', value: codeBlock(stoken), inline: false },
+				{ name: 'ltoken_v2', value: codeBlock(ltoken_v2), inline: false },
+				{ name: 'ltuid_v2', value: codeBlock(ltuid_v2), inline: false },
+				{ name: 'ltmid_v2', value: codeBlock(ltmid_v2), inline: false },
 			)
 			.setTimestamp()
 			.setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });

@@ -608,7 +608,6 @@ class HoYoLAB {
         await Promise.all(usersWithAutoRedeem.map(async (user) => {
             const { ltoken_v2, ltuid_v2 } = user.hoyolab;
             const redeemEmbed = [];
-            const buttons = [];
 
             await Promise.all(Object.entries(user.linkedGamesList).map(async ([game, gameData]) => {
                 if (!gameData.auto_redeem) return;
@@ -626,12 +625,6 @@ class HoYoLAB {
                                 .setTitle('New Codes Available!')
                                 .setAuthor({ name: `${gameData.nickname} (${gameData.uid})`, iconURL: gameLogo })
                                 .setDescription(`Code: \`${code}\``)
-                            );
-
-                            buttons.push(new ButtonBuilder()
-                                .setLabel(code)
-                                .setURL(gameUrl.redemption + code)
-                                .setStyle(ButtonStyle.Link)
                             );
 
                             await MongoDB.updateUserCodes(dbClient, user.id, game, code);
@@ -659,18 +652,11 @@ class HoYoLAB {
             }));
 
             if (redeemEmbed.length > 0) {
-                const rows = buttons.reduce((acc, button, index) => {
-                    const rowIndex = Math.floor(index / 5);
-                    if (!acc[rowIndex]) acc[rowIndex] = new ActionRowBuilder();
-                    acc[rowIndex].addComponents(button);
-                    return acc;
-                }, []);
-
-                await client.users.send(user.id, {
-                    embeds: redeemEmbed,
-                    components: rows
-                });
-            }
+                const embedChunks = chunkArray(redeemEmbed, 10);
+                for (const chunk of embedChunks) {
+                    await client.users.send(user.id, { embeds: chunk });
+                }
+            };
         }));
     }
 
@@ -739,6 +725,14 @@ class HoYoLAB {
             }));
         }
     }
+}
+
+function chunkArray(array, chunkSize) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
 }
 
 module.exports = { HoYoLAB };

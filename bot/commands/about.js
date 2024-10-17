@@ -37,7 +37,7 @@ module.exports = {
 					},
 					{
 						name: 'Acknowledgement/Credits',
-						value: `This bot could not be made possible without the following recourses:\n- ${userMention('410036441129943050')}'s code API: https://github.com/seriaati/hoyo-codes\n- Hakush.in API: https://hakush.in`,
+						value: `This bot could not be made possible without the following recourses:\n- ${userMention('410036441129943050')}'s code API: https://github.com/seriaati/hoyo-codes\n- Hakush.in API: https://hakush.in\n- KQM Guides: https://discord.gg/keqing`,
 						inline: false,
 					},
 				);

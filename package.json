@@ -1,6 +1,6 @@
 {
   "name": "hoyovista",
-  "version": "2.1.13",
+  "version": "2.1.14",
   "description": "Empower your HoYoverse experience with this HoYoLAB Bot! Access all the HoYoLAB features right from Discord, including daily check-ins, auto code redemptions, and more!",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,7 @@
   "dependencies": {
     "@napi-rs/canvas": "^0.1.55",
     "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "cron": "^3.1.7",
     "discord.js": "^14.16.1",
     "dotenv": "^16.4.5",

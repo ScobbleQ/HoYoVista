@@ -3,6 +3,8 @@ const { Hakushin } = require('../class/hakushin');
 const { formatDesc, formatVision, formatWeapon, formatRegion } = require('../utils/game');
 const { elements, Gcg, Materials } = require('../utils/emojis');
 const config = require('../../config');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 async function buildGenshinCharacterReply(interaction, baseUrl, hakushin, id, selection, args, toUpdate) {
 	let embed = new EmbedBuilder()
@@ -27,6 +29,9 @@ async function buildGenshinCharacterReply(interaction, baseUrl, hakushin, id, se
 	else if (selection === 'ascension') {
 		embed = buildGenshinAscensionEmbed(embed, hakushin);
 	}
+	else if (selection === 'guide') {
+		embed = await buildGenshinGuideEmbed(embed, hakushin);
+	}
 
 	const actionRow = buildGenshinSelectionMenu(selection, id, hakushin.Name);
 	const response = {
@@ -34,7 +39,7 @@ async function buildGenshinCharacterReply(interaction, baseUrl, hakushin, id, se
 		components: [actionRow, ...(additionalActionRow ? [additionalActionRow] : [])]
 	};
 
-    let reply;
+	let reply;
 	toUpdate ? reply = await interaction.update(response) : reply = await interaction.editReply(response);
 
 	const collector = reply.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 300_000 });
@@ -66,7 +71,7 @@ async function buildGenshinOverviewEmbed(embed, data, baseUrl) {
 			{
 				name: 'Character Information',
 				value:
-					`Rarity: ${'<:Star:1279903858763763732>'.repeat(data.Rarity === 'QUALITY_ORANGE' ? 5 : 4)}\n` +
+					`Rarity: ${'<:Star:1279903858763763732>'.repeat(data.Rarity === 'QUALITY_PURPLE' ? 4 : 5)}\n` +
 					`Vision: ${formatVision(data.CharaInfo.Vision)}\n` +
 					`Weapon: ${formatWeapon(data.Weapon)}\n` +
 					`Region: ${formatRegion(data.CharaInfo.Region)}\n` +
@@ -111,7 +116,12 @@ function buildGenshinSelectionMenu(selection, id, name) {
 			.setLabel('Ascension')
 			.setValue(`search_gi_character_${id}_ascension`)
 			.setDescription(`View ${name}'s ascension materials`)
-			.setDefault(selection === 'ascension')
+			.setDefault(selection === 'ascension'),
+		new StringSelectMenuOptionBuilder()
+			.setLabel('Guide')
+			.setValue(`search_gi_character_${id}_guide`)
+			.setDescription(`View ${name}'s guide from KQM`)
+			.setDefault(selection === 'guide')
 	];
 
 	return new ActionRowBuilder().addComponents(
@@ -275,6 +285,25 @@ function buildGenshinAscensionEmbed(embed, hakushin) {
 		{ name: 'Ascension Materials (1-90)', value: aggregateMats([Ascensions]) },
 		{ name: 'Talent Level-up Materials (1-10)', value: aggregateMats(Talents) },
 	);
+}
+
+async function buildGenshinGuideEmbed(embed, hakushin) {
+	const originalName = hakushin.Icon.split('_')[2].toLowerCase();
+
+	try {
+		const finalUrl = await fetchImageUrl(originalName);
+		if (!finalUrl) throw new Error('Image URL not found');
+
+		return embed.setImage(finalUrl);
+	} catch (error) {
+		try {
+			const alternateName = hakushin.Name.toLowerCase();
+			const finalUrl = await fetchImageUrl(alternateName);
+			return embed.setImage(finalUrl);
+		} catch (altError) {
+			return embed.setDescription('Unable to find the guide for ' + originalName);
+		}
+	}
 }
 
 const fetchCharacterGif = (charId, abilityId) => {
@@ -497,6 +526,21 @@ function adjustM(value) {
 	});
 
 	return e[value] || value;
+}
+
+async function fetchImageUrl(name) {
+	const url = `https://kqm.gg/i/${name}/`;
+
+	const response = await axios.get(url, {
+		headers: {
+			'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0.1 Safari/605.1.15',
+			'Referer': url
+		}
+	});
+
+	const $ = cheerio.load(response.data);
+	const finalUrl = $('meta[property="og:image"]').attr('content');
+	return finalUrl;
 }
 
 module.exports = { buildGenshinCharacterReply, buildGenshinItemReply }
