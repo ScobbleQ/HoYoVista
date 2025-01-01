@@ -52,6 +52,10 @@ export const redeemCode = async (id, { arrayOfGameId, hoyolabCookies, linkedGame
 
 						successfulRedeems++;
 					}
+					else if (data.retcode === -1075) {
+						// no character on server, disable auto redeem
+						await mongo.set(id, { field: `linked_games.${gameKey}.auto_redeem`, value: false });
+					}
 					else {
 						// not automatic, notify user of failed redemption
 						if (!automatic) {
