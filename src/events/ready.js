@@ -17,7 +17,5 @@ export default {
 		cron.addJob('5 12 * * *', autoCheckin, client); // Daily at 12:05
 
 		cron.startJobs();
-
-
 	},
 };

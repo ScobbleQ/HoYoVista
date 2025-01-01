@@ -1,6 +1,6 @@
 import { MongoDB } from '../class/mongo.js';
 import { performCheckin } from '../hoyolab/checkin.js';
-import { redeemCode } from '../hoyolab/redeem.js';
+import { redeemCode, cleanAttemptedCodes } from '../hoyolab/redeem.js';
 import logger from './logger.js';
 
 export const autoCheckin = async (client) => {
@@ -53,6 +53,9 @@ export const autoCheckin = async (client) => {
 		catch (error) {
 			logger.error(`Auto Checkin: Failed for user ${user.discord_id}`, { stack: error.stack });
 		}
+
+		// clean up attempted code from db
+		cleanAttemptedCodes(user.discord_id);
 	});
 };
 

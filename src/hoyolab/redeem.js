@@ -110,3 +110,23 @@ const postRedeem = async (game_id, uid, region, code, { ltmid_v2, ltoken_v2, ltu
 		return { retcode: -1, message: 'Failed to redeem code', data: null };
 	}
 };
+
+export const cleanAttemptedCodes = async (id) => {
+	const activeCodes = await fetchSeriaCodes();
+
+	const mongo = MongoDB.getInstance();
+	const { data: user } = await mongo.getUserData(id);
+	const linkedGames = user.linked_games;
+
+	for (const [gameKey, gameData] of Object.entries(linkedGames)) {
+		const activeGameCodes = activeCodes[gameKey]?.map(code => code.code) || [];
+		const cleanedAttemptedCodes = gameData.attempted_codes.filter(code => activeGameCodes.includes(code));
+
+		if (cleanedAttemptedCodes.length !== gameData.attempted_codes.length) {
+			await mongo.set(id, {
+				field: `linked_games.${gameKey}.attempted_codes`,
+				value: cleanedAttemptedCodes,
+			});
+		}
+	}
+};
