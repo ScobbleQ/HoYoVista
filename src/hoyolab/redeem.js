@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
 import { censorUid } from '../utils/privacy.js';
-import { REDEEM_URL, GAME_BIZS, APP_HEADER } from '../utils/routes.js';
+import { REDEEM_URL, GAME_BIZS, APP_HEADER, GAME_ICON_URL } from '../utils/routes.js';
 import { Game, IdToAbbr } from './constants.js';
 import { EmbedBuilder } from 'discord.js';
 import { embedColors } from '../../config.js';
