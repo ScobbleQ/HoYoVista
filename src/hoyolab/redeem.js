@@ -66,6 +66,9 @@ export const redeemCode = async (id, { arrayOfGameId, hoyolabCookies, linkedGame
 
 					attemptedCodes.push(code.code);
 					mongo.push(id, { field: `linked_games.${gameKey}.attempted_codes`, value: code.code });
+
+					// sleep for 5 seconds to prevent rate limiting
+					await new Promise(resolve => setTimeout(resolve, 5005));
 				}),
 			);
 		}),
