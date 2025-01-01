@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
-import { IdToFull, IdToAbbr } from '../hoyolab/constants.js';
+import { IdToFull, IdToAbbr, IdToShort } from '../hoyolab/constants.js';
 import { createEmbed } from '../utils/createEmbed.js';
 import { Toggles } from '../utils/emojis.js';
 import { embedColors } from '../../config.js';
@@ -117,13 +117,13 @@ export default {
 		const typeLabel = type === 'checkin' ? 'Check-in Notifications' : 'Redeem Notifications';
 
 		const status = data.settings[typeKey] ? 'Enabled' : 'Disabled';
-		let description = `- ${typeLabel}: ${status}\n\n`;
+		let description = `${typeLabel}: ${status}\n\n`;
 
 		const toggles = Object.values(data.linked_games).map((game) => {
-			description += `${IdToFull[game.game_id]}: ${game[`auto_${type}`] ? 'Enabled' : 'Disabled'}\n`;
+			description += `- ${IdToFull[game.game_id]}: ${game[`auto_${type}`] ? 'Enabled' : 'Disabled'}\n`;
 			return new ButtonBuilder()
 				.setCustomId(`settings-${typeValue}-${game[typeValue]}-${game.game_id}`)
-				.setLabel(IdToFull[game.game_id])
+				.setLabel(IdToShort[game.game_id])
 				.setStyle(ButtonStyle.Primary)
 				.setEmoji(Toggles[game[`auto_${type}`]]);
 		});
