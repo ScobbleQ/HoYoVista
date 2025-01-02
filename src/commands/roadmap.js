@@ -17,6 +17,6 @@ export default {
             )
             .setFooter({ text: 'Last updated on Jan 1, 2025. Subject to change.' });
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
 	},
 };
