@@ -13,7 +13,7 @@ const createEmbed = ({ nickname, uid, gameId, color, title, description, thumbna
 		.setDescription(description);
 
 	if (thumbnail) embed.setThumbnail(thumbnail);
-	if (footer) embed.setFooter({ name: footer });
+	if (footer) embed.setFooter({ text: footer });
 
 	return embed;
 };
