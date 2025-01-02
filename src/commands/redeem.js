@@ -9,7 +9,7 @@ import { redeemCode } from '../hoyolab/redeem.js';
 export default {
 	data: new SlashCommandBuilder()
 		.setName('redeem')
-		.setDescription('Settings')
+		.setDescription('Redeem codes for in-game rewards')
 		.addStringOption(option => option
 			.setName('account')
 			.setDescription('The account to redeem code for.')

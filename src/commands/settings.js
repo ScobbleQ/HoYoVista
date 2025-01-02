@@ -23,7 +23,7 @@ const Description = {
 export default {
 	data: new SlashCommandBuilder()
 		.setName('settings')
-		.setDescription('Settings')
+		.setDescription('Configure your user settings')
 		.setIntegrationTypes([0, 1])
 		.setContexts([0, 1, 2]),
 	async execute(interaction, update = false, page = 1) {

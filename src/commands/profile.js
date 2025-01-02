@@ -14,7 +14,7 @@ import { Game } from '../hoyolab/constants.js';
 export default {
 	data: new SlashCommandBuilder()
 		.setName('profile')
-		.setDescription('view profile')
+		.setDescription('view game profile')
 		.addStringOption(option => option
 			.setName('account')
 			.setDescription('The account to view the profile for.')

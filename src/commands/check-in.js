@@ -8,7 +8,7 @@ import { performCheckin } from '../hoyolab/checkin.js';
 export default {
 	data: new SlashCommandBuilder()
 		.setName('check-in')
-		.setDescription('Settings')
+		.setDescription('Daily check-in from HoYoLAB')
 		.addStringOption(option => option
 			.setName('account')
 			.setDescription('The account to check-in for.')
