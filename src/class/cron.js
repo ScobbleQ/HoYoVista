@@ -1,9 +1,6 @@
-import { CronJob } from 'cron';
-import logger from '../utils/logger.js';
+import { CronJob } from "cron";
+import logger from "../utils/logger.js";
 
-/**
- * Cron class to handle cron jobs
- */
 export class Cron {
     #jobs = [];
 
@@ -19,7 +16,7 @@ export class Cron {
      */
     addJob(time, callback, ...args) {
         const jobCallback = () => callback(...args);
-        const job = new CronJob(time, jobCallback, null, false, 'America/New_York');
+        const job = new CronJob(time, jobCallback, null, false, "America/New_York");
         this.#jobs.push(job);
     }
 
@@ -28,7 +25,7 @@ export class Cron {
      */
     startJobs() {
         logger.info(`Cron: Starting ${this.#jobs.length} jobs`);
-        this.#jobs.forEach(job => job.start());
+        this.#jobs.forEach((job) => job.start());
     }
 
     /**
@@ -36,6 +33,6 @@ export class Cron {
      */
     stopJobs() {
         logger.info(`Cron: Stopping ${this.#jobs.length} jobs`);
-        this.#jobs.forEach(job => job.stop());
+        this.#jobs.forEach((job) => job.stop());
     }
 }
