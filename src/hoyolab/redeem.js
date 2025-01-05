@@ -40,8 +40,7 @@ export const redeemCode = async (
             await Promise.all(
                 unredeemedCodes.map(async (code) => {
                     const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
-					console.log(code.code, game_role_id)
-					console.log(data);
+
                     if (data.retcode === 0) {
                         // not automatic, notify user of successful redemption
                         // automatic, notify user if toNotify is true

@@ -60,7 +60,7 @@ export const performCheckin = async ({
             continue;
         }
 
-		successfulCheckin++;
+        successfulCheckin++;
 
         // Skip if user has disabled check-in notifications (automatic only)
         if (automatic && !to_notify_checkin) continue;

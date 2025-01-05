@@ -32,7 +32,7 @@ export const autoCheckin = async (client) => {
             });
 
             if (user.settings.collect_data) {
-                mongo.increment(user.id, { field: 'stats.total_checkin', value: checkin.amount });
+                mongo.increment(user.discord_id, { field: 'stats.total_checkin', value: checkin.amount });
             }
 
             if (user.settings.to_notify_checkin) {
@@ -87,7 +87,7 @@ export const autoRedeem = async (client) => {
             });
 
             if (user.settings.collect_data) {
-                mongo.increment(user.id, { field: 'stats.total_redeem', value: redeem.amount });
+                mongo.increment(user.discord_id, { field: 'stats.total_redeem', value: redeem.amount });
             }
 
             if (user.settings.to_notify_redeem && redeem.embeds.length > 0) {
