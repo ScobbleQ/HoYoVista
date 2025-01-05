@@ -1,11 +1,11 @@
-import axios from "axios";
-import { fetchSeriaCodes } from "../utils/fetchSeriaCodes.js";
-import { censorUid } from "../utils/privacy.js";
-import { REDEEM_URL, GAME_BIZS, APP_HEADER, GAME_ICON_URL } from "../utils/routes.js";
-import { Game, IdToAbbr } from "./constants.js";
-import { EmbedBuilder } from "discord.js";
-import { embedColors } from "../../config.js";
-import { MongoDB } from "../class/mongo.js";
+import axios from 'axios';
+import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
+import { censorUid } from '../utils/privacy.js';
+import { REDEEM_URL, GAME_BIZS, APP_HEADER, GameIconUrl } from './routes.js';
+import { Game, IdToAbbr } from './constants.js';
+import { EmbedBuilder } from 'discord.js';
+import { embedColors } from '../../config.js';
+import { MongoDB } from '../class/mongo.js';
 
 export const redeemCode = async (
     id,
@@ -40,7 +40,8 @@ export const redeemCode = async (
             await Promise.all(
                 unredeemedCodes.map(async (code) => {
                     const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
-
+					console.log(code.code, game_role_id)
+					console.log(data);
                     if (data.retcode === 0) {
                         // not automatic, notify user of successful redemption
                         // automatic, notify user if toNotify is true
@@ -50,9 +51,9 @@ export const redeemCode = async (
                                     .setColor(embedColors.primary)
                                     .setAuthor({
                                         name: `${nickname} (${uid})`,
-                                        iconURL: GAME_ICON_URL[gameId],
+                                        iconURL: GameIconUrl[gameId],
                                     })
-                                    .setTitle("Code Redeemed")
+                                    .setTitle('Code Redeemed')
                                     .setDescription(`Code: ${code.code}\nReward: ${code.reward}`)
                             );
                         }
@@ -97,18 +98,18 @@ const postRedeem = async (game_id, uid, region, code, { ltmid_v2, ltoken_v2, ltu
 
     const headers = APP_HEADER({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang });
     if (game_id === Game.GENSHIN) {
-        headers["Host"] = "sg-hk4e-api.hoyolab.com";
+        headers['Host'] = 'sg-hk4e-api.hoyolab.com';
     } else if (game_id === Game.STARRAIL) {
-        headers["Accept"] = "*/*";
-        headers["Host"] = "sg-hkrpg-api.hoyolab.com";
+        headers['Accept'] = '*/*';
+        headers['Host'] = 'sg-hkrpg-api.hoyolab.com';
     } else if (game_id === Game.ZZZ) {
-        headers["Accept"] = "*/*";
-        headers["Host"] = "public-operation-nap.hoyolab.com";
+        headers['Accept'] = '*/*';
+        headers['Host'] = 'public-operation-nap.hoyolab.com';
     }
 
     const params = {
         t: Date.now(),
-        lang: "en",
+        lang: 'en',
         game_biz: GAME_BIZS[game_id],
         uid: uid,
         region: region,
@@ -117,9 +118,9 @@ const postRedeem = async (game_id, uid, region, code, { ltmid_v2, ltoken_v2, ltu
 
     try {
         const response = await axios.get(url, { headers, params });
-        return { retcode: 1, message: "Success", data: response.data };
+        return { retcode: 1, message: 'Success', data: response.data };
     } catch {
-        return { retcode: -1, message: "Failed to redeem code", data: null };
+        return { retcode: -1, message: 'Failed to redeem code', data: null };
     }
 };
 

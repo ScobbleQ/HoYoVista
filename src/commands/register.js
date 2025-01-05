@@ -5,15 +5,15 @@ import {
     ButtonBuilder,
     ButtonStyle,
     MessageFlags,
-} from "discord.js";
-import { MongoDB } from "../class/mongo.js";
-import { embedColors } from "../../config.js";
-import { createEmbed } from "../utils/createEmbed.js";
+} from 'discord.js';
+import { MongoDB } from '../class/mongo.js';
+import { embedColors } from '../../config.js';
+import { createEmbed } from '../utils/createEmbed.js';
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("register")
-        .setDescription("Register your account to HoYoVista.")
+        .setName('register')
+        .setDescription('Register your account to HoYoVista.')
         .setIntegrationTypes([0, 1])
         .setContexts([0, 1, 2]),
     async execute(interaction) {
@@ -25,24 +25,24 @@ export default {
         // Already registered
         if (user.retcode === 1) {
             if (user.data.settings.collect_data) {
-                mongo.increment(interaction.user.id, { field: "stats.command_used", value: 1 });
+                mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
             }
 
-            const embed = createEmbed("You are already registered your account.", embedColors.error);
+            const embed = createEmbed('You are already registered your account.', embedColors.error);
             return interaction.editReply({ embeds: [embed] });
         }
 
         const registerEmbed = new EmbedBuilder()
             .setColor(embedColors.primary)
-            .setTitle("HoYoVista Registration")
+            .setTitle('HoYoVista Registration')
             .setDescription(
-                "By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) " +
-                    "and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service)."
+                'By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) ' +
+                    'and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).'
             );
 
         const continueButton = new ButtonBuilder()
-            .setCustomId("register-disclaimer")
-            .setLabel("Agree and Register")
+            .setCustomId('register-disclaimer')
+            .setLabel('Agree and Register')
             .setStyle(ButtonStyle.Success);
 
         // Show the registration message
@@ -52,14 +52,14 @@ export default {
         });
     },
     async handleButtonClick(interaction) {
-        const button = interaction.customId.split("-")[1];
+        const button = interaction.customId.split('-')[1];
         const mongo = MongoDB.getInstance();
 
-        if (button === "disclaimer") {
+        if (button === 'disclaimer') {
             // Show the initial "registering" message
             const initialEmbed = new EmbedBuilder()
                 .setColor(embedColors.warning)
-                .setDescription("Preparing your account, this will only take a moment...");
+                .setDescription('Preparing your account, this will only take a moment...');
             await interaction.update({ embeds: [initialEmbed], components: [] });
 
             // Register the user
@@ -67,10 +67,10 @@ export default {
 
             // List of commands to show after registration
             const commands = [
-                "- `/hoyolink` - Link your HoYoLAB account with your Discord account.",
-                "- `/settings` - Access and modify your account settings.",
-                "- `/data` - Manage your data, including viewing or deleting it.",
-            ].join("\n");
+                '- `/hoyolink` - Link your HoYoLAB account with your Discord account.',
+                '- `/settings` - Access and modify your account settings.',
+                '- `/data` - Manage your data, including viewing or deleting it.',
+            ].join('\n');
 
             // Show the success message after updating
             const successEmbed = new EmbedBuilder()

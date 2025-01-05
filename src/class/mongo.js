@@ -1,6 +1,6 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
-import { config } from "../../config.js";
-import logger from "../utils/logger.js";
+import { MongoClient, ServerApiVersion } from 'mongodb';
+import { config } from '../../config.js';
+import logger from '../utils/logger.js';
 
 export class MongoDB {
     static #instance;
@@ -31,10 +31,10 @@ export class MongoDB {
 
         try {
             await client.connect();
-            logger.info("MongoDB: Connected successfully!");
+            logger.info('MongoDB: Connected successfully!');
 
-            const database = client.db("hoyovista");
-            const collection = database.collection("users");
+            const database = client.db('hoyovista');
+            const collection = database.collection('users');
 
             await collection.createIndex({ discord_id: 1 }, { unique: true });
 
@@ -50,14 +50,14 @@ export class MongoDB {
     async #attemptReconnection(retries = 5, delay = 2000) {
         while (retries > 0) {
             try {
-                logger.info("MongoDB: Attempting to reconnect...");
+                logger.info('MongoDB: Attempting to reconnect...');
                 await this.#mongoClient.connect();
-                logger.info("MongoDB: Reconnected successfully!");
+                logger.info('MongoDB: Reconnected successfully!');
                 return;
             } catch (error) {
                 retries--;
                 if (retries === 0) {
-                    logger.error("MongoDB: Reconnection failed:", { stack: error.stack });
+                    logger.error('MongoDB: Reconnection failed:', { stack: error.stack });
                     return;
                 }
                 await new Promise((resolve) => setTimeout(resolve, delay));
@@ -84,7 +84,7 @@ export class MongoDB {
             if (!this.#mongoClient) await this.#attemptReconnection();
 
             const user = await this.#collection.findOne({ discord_id: targetId });
-            if (!user) return { retcode: -1, message: "User not found" };
+            if (!user) return { retcode: -1, message: 'User not found' };
 
             return { retcode: 1, data: user };
         } catch (error) {
@@ -101,7 +101,7 @@ export class MongoDB {
                 : { [fields]: 1, _id: 0 };
 
             const user = await this.#collection.findOne({ discord_id: id }, { projection });
-            if (!user) return { retcode: -1, message: "User not found" };
+            if (!user) return { retcode: -1, message: 'User not found' };
 
             return { retcode: 1, data: user };
         } catch (error) {
@@ -129,7 +129,7 @@ export class MongoDB {
             };
 
             await this.#collection.insertOne(userData);
-            return { retcode: 1, message: "Success" };
+            return { retcode: 1, message: 'Success' };
         } catch (error) {
             return { retcode: -1, message: error.message };
         }

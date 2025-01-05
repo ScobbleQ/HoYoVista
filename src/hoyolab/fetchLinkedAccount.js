@@ -1,5 +1,5 @@
-import { MongoDB } from "../class/mongo.js";
-import { AbbrToFull } from "./constants.js";
+import { MongoDB } from '../class/mongo.js';
+import { AbbrToFull } from './constants.js';
 
 const memoryCache = new Map();
 
@@ -21,18 +21,18 @@ export const fetchLinkedAccount = async (id, { exclude = [] } = {}) => {
         const cachedGames = memoryCache.get(cacheKey);
         const result = mapGames(cachedGames, exclude);
         return result.length === 0
-            ? { retcode: 0, message: "No supported linked accounts found." }
-            : { retcode: 1, message: "Success", data: result };
+            ? { retcode: 0, message: 'No supported linked accounts found.' }
+            : { retcode: 1, message: 'Success', data: result };
     }
 
     const mongo = MongoDB.getInstance();
 
     const user = await mongo.getUserData(id);
     if (user.retcode === -1) {
-        return { retcode: -1, message: "No accounts found.", data: null };
+        return { retcode: -1, message: 'No accounts found.', data: null };
     }
     if (!user.data.linked_games) {
-        return { retcode: -1, message: "No linked games found.", data: null };
+        return { retcode: -1, message: 'No linked games found.', data: null };
     }
 
     const linkedGames = user.data.linked_games;
@@ -41,6 +41,6 @@ export const fetchLinkedAccount = async (id, { exclude = [] } = {}) => {
 
     const result = mapGames(linkedGames, exclude);
     return result.length === 0
-        ? { retcode: 0, message: "No supported linked accounts found." }
-        : { retcode: 1, message: "Success", data: result };
+        ? { retcode: 0, message: 'No supported linked accounts found.' }
+        : { retcode: 1, message: 'Success', data: result };
 };

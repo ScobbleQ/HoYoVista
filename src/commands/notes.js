@@ -1,11 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { embedColors } from "../../config.js";
-import { MongoDB } from "../class/mongo.js";
-import { Game } from "../hoyolab/constants.js";
-import { fetchLinkedAccount } from "../hoyolab/fetchLinkedAccount.js";
-import { fetchNotes } from "../hoyolab/fetchNotes.js";
-import { createEmbed } from "../utils/createEmbed.js";
-import { GAME_ICON_URL } from "../utils/routes.js";
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { embedColors } from '../../config.js';
+import { MongoDB } from '../class/mongo.js';
+import { Game } from '../hoyolab/constants.js';
+import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
+import { fetchNotes } from '../hoyolab/fetchNotes.js';
+import { createEmbed } from '../utils/createEmbed.js';
+import { GameIconUrl } from '../hoyolab/routes.js';
 
 // TODO:
 // add STARRAIL and HONKAI
@@ -14,12 +14,12 @@ import { GAME_ICON_URL } from "../utils/routes.js";
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("notes")
-        .setDescription("View your Real-Time Notes")
+        .setName('notes')
+        .setDescription('View your Real-Time Notes')
         .addStringOption((option) =>
             option
-                .setName("account")
-                .setDescription("The account to view the notes for.")
+                .setName('account')
+                .setDescription('The account to view the notes for.')
                 .setRequired(true)
                 .setAutocomplete(true)
         )
@@ -31,9 +31,9 @@ export default {
             exclude: [Game.STARRAIL, Game.HONKAI],
         });
 
-        if (focusedOption.name === "account") {
+        if (focusedOption.name === 'account') {
             if (retcode !== 1 || !data) {
-                return await interaction.respond([{ name: message, value: "-1" }]);
+                return await interaction.respond([{ name: message, value: '-1' }]);
             }
 
             const filtered = data.filter((choice) =>
@@ -50,8 +50,8 @@ export default {
     },
     async execute(interaction) {
         // fetch gameId and send initial feedback message
-        const gameId = interaction.options.getString("account");
-        const fetchingEmbed = createEmbed("Retrieving your data. Please wait...", embedColors.warning);
+        const gameId = interaction.options.getString('account');
+        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -60,21 +60,21 @@ export default {
         const { retcode, data: user } = await mongo.getUserData(interaction.user.id);
 
         // error code + no account
-        if (gameId === "-1" && retcode === -1) {
+        if (gameId === '-1' && retcode === -1) {
             const embed = createEmbed(
-                "You are not registered. Please use the `/register` command to create an account."
+                'You are not registered. Please use the `/register` command to create an account.'
             );
             return interaction.editReply({ embeds: [embed] });
         }
 
         // increment command usage count
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: "stats.command_used", value: 1 });
+            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
         }
 
         // error code + account
-        if (gameId === "-1" && retcode === 1) {
-            const embed = createEmbed("None of your linked games are supported for this command.");
+        if (gameId === '-1' && retcode === 1) {
+            const embed = createEmbed('None of your linked games are supported for this command.');
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -120,38 +120,38 @@ export default {
         if (gameId === Game.GENSHIN) {
             const resinLevel = `${notes.current_resin}/${notes.max_resin}`;
             const resinRestore =
-                notes.resin_recovery_time === "0"
-                    ? "Fully Replenished"
+                notes.resin_recovery_time === '0'
+                    ? 'Fully Replenished'
                     : `Full <t:${Math.floor(Date.now() / 1000) + Number(notes.resin_recovery_time)}:R>`;
             const base = new EmbedBuilder()
                 .setColor(embedColors.primary)
                 .setAuthor({
                     name: `${nickname} (${game_role_id})`,
-                    iconURL: GAME_ICON_URL[gameId],
+                    iconURL: GameIconUrl[gameId],
                 })
                 .setDescription(`**Original Resin** ${resinLevel}\n${resinRestore}`);
 
-            if (notes.max_home_coin !== "0") {
+            if (notes.max_home_coin !== '0') {
                 const realmMax =
-                    notes.home_coin_recovery_time === "0"
-                        ? "Already Full"
+                    notes.home_coin_recovery_time === '0'
+                        ? 'Already Full'
                         : `Replenishes <t:${Math.floor(Date.now() / 1000) + Number(notes.home_coin_recovery_time)}:R>`;
                 base.addFields({
-                    name: "Jar of Riches",
+                    name: 'Jar of Riches',
                     value: `Realm Currency ${notes.current_home_coin}/${notes.max_home_coin}\n${realmMax}`,
                 });
             }
 
             if (notes.resin_discount_num_limit) {
                 base.addFields({
-                    name: "Enemies of Note",
+                    name: 'Enemies of Note',
                     value: `Discount ${notes.remain_resin_discount_num}/${notes.resin_discount_num_limit}`,
                 });
             }
 
             if (notes.max_expedition_num) {
                 base.addFields({
-                    name: "Expedition",
+                    name: 'Expedition',
                     value: `Dispatched ${notes.current_expedition_num}/${notes.max_expedition_num}`,
                 });
             }
@@ -160,14 +160,14 @@ export default {
             embeds.push(
                 new EmbedBuilder()
                     .setColor(embedColors.primary)
-                    .setTitle("Daily Commission Reward")
+                    .setTitle('Daily Commission Reward')
                     .addFields(
                         {
-                            name: "Daily Commissions",
+                            name: 'Daily Commissions',
                             value: `${notes.daily_task.finished_num}/${notes.daily_task.total_num}`,
                         },
                         {
-                            name: "Long-Term Encounter Points",
+                            name: 'Long-Term Encounter Points',
                             value: `x${notes.daily_task.stored_attendance}`,
                         }
                     )
@@ -176,36 +176,36 @@ export default {
             const batteryLevel = `${notes.energy.progress.current}/${notes.energy.progress.max}`;
             const batteryRestore =
                 notes.energy.restore === 0
-                    ? "Fully Recovered"
+                    ? 'Fully Recovered'
                     : `Full <t:${Math.floor(Date.now() / 1000) + notes.energy.restore}:R>`;
             embeds.push(
                 new EmbedBuilder()
                     .setColor(embedColors.primary)
                     .setAuthor({
                         name: `${nickname} (${game_role_id})`,
-                        iconURL: GAME_ICON_URL[gameId],
+                        iconURL: GameIconUrl[gameId],
                     })
-                    .setThumbnail("https://act.hoyolab.com/app/zzz-game-record/images/battery-icon.b8c5b557.png")
+                    .setThumbnail('https://act.hoyolab.com/app/zzz-game-record/images/battery-icon.b8c5b557.png')
                     .setDescription(`**Battery Charge** ${batteryLevel}\n${batteryRestore}`)
             );
 
             embeds.push(
                 new EmbedBuilder()
                     .setColor(embedColors.primary)
-                    .setTitle("Daily Missions")
+                    .setTitle('Daily Missions')
                     .addFields(
                         {
-                            name: "Engagement Today",
+                            name: 'Engagement Today',
                             value: `${notes.vitality.current}/${notes.vitality.max}`,
                         },
                         {
-                            name: "Scratch Card Mania",
-                            value: notes.card_sign === "CardSignNo" ? "Incomplete" : "Complete",
+                            name: 'Scratch Card Mania',
+                            value: notes.card_sign === 'CardSignNo' ? 'Incomplete' : 'Complete',
                         },
                         {
-                            name: "Video Store Management",
+                            name: 'Video Store Management',
                             value:
-                                notes.vhs_sale.sale_state === "SaleStateDone" ? "Revenue Available" : "Currently Open",
+                                notes.vhs_sale.sale_state === 'SaleStateDone' ? 'Revenue Available' : 'Currently Open',
                         }
                     )
             );
@@ -214,20 +214,20 @@ export default {
             const bountyReset = `Refreshes <t:${Math.floor(Date.now() / 1000) + notes.bounty_commission.refresh_time}:R>`;
             const riduPoints = notes.weekly_task
                 ? `${notes.weekly_task.cur_point}/${notes.weekly_task.max_point}`
-                : "-";
+                : '-';
             const riduReset = notes.weekly_task
                 ? `Refreshes <t:${Math.floor(Date.now() / 1000) + notes.weekly_task.refresh_time}:R>`
-                : "-";
+                : '-';
             embeds.push(
                 new EmbedBuilder()
                     .setColor(embedColors.primary)
-                    .setTitle("Season Missions")
+                    .setTitle('Season Missions')
                     .addFields(
                         {
-                            name: "Bounty Commission",
+                            name: 'Bounty Commission',
                             value: `Progress ${bountyProgress}\n${bountyReset}`,
                         },
-                        { name: "Ridu Weekly", value: `Points ${riduPoints}\n${riduReset}` }
+                        { name: 'Ridu Weekly', value: `Points ${riduPoints}\n${riduReset}` }
                     )
             );
         } else if (gameId === Game.STARRAIL) {

@@ -1,16 +1,16 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { REST, Routes } from "discord.js";
-import { config } from "../config.js";
-import logger from "./utils/logger.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { REST, Routes } from 'discord.js';
+import { config } from '../config.js';
+import logger from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const commands = [];
-const foldersPath = path.join(__dirname, "commands");
-const commandFolders = fs.readdirSync(foldersPath).filter((file) => file.endsWith(".js"));
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath).filter((file) => file.endsWith('.js'));
 
 async function loadCommands() {
     for (const file of commandFolders) {
@@ -18,7 +18,7 @@ async function loadCommands() {
         const command = await import(filePath);
         const cmd = command.default;
 
-        if (cmd && "data" in cmd && "execute" in cmd) {
+        if (cmd && 'data' in cmd && 'execute' in cmd) {
             commands.push(cmd.data.toJSON());
             logger.info(`Loaded slash command: ${cmd.data.name}`);
         } else {
@@ -39,6 +39,6 @@ async function loadCommands() {
         });
         logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
     } catch (error) {
-        logger.error("Failed to reload commands:", { stack: error.stack });
+        logger.error('Failed to reload commands:', { stack: error.stack });
     }
 })();

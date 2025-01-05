@@ -1,5 +1,5 @@
-import { CronJob } from "cron";
-import logger from "../utils/logger.js";
+import { CronJob } from 'cron';
+import logger from '../utils/logger.js';
 
 export class Cron {
     #jobs = [];
@@ -16,7 +16,7 @@ export class Cron {
      */
     addJob(time, callback, ...args) {
         const jobCallback = () => callback(...args);
-        const job = new CronJob(time, jobCallback, null, false, "America/New_York");
+        const job = new CronJob(time, jobCallback, null, false, 'America/New_York');
         this.#jobs.push(job);
     }
 

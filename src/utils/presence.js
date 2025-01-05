@@ -1,4 +1,4 @@
-import { discordPresence } from "../../config.js";
+import { discordPresence } from '../../config.js';
 
 /**
  * Set a random presence for the bot

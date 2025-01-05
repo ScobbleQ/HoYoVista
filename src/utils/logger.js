@@ -1,4 +1,4 @@
-import { createLogger, format, transports } from "winston";
+import { createLogger, format, transports } from 'winston';
 
 const logger = createLogger({
     levels: {
@@ -18,12 +18,12 @@ const logger = createLogger({
         })
     ),
     transports: [
-        new transports.Console({ level: "debug" }),
-        new transports.File({ filename: "logs/bot.log", level: "info" }),
-        new transports.File({ filename: "logs/error.log", level: "error" }),
+        new transports.Console({ level: 'debug' }),
+        new transports.File({ filename: 'logs/bot.log', level: 'info' }),
+        new transports.File({ filename: 'logs/error.log', level: 'error' }),
     ],
-    exceptionHandlers: [new transports.File({ filename: "logs/exceptions.log" })],
-    rejectionHandlers: [new transports.File({ filename: "logs/rejections.log" })],
+    exceptionHandlers: [new transports.File({ filename: 'logs/exceptions.log' })],
+    rejectionHandlers: [new transports.File({ filename: 'logs/rejections.log' })],
 });
 
 export default logger;

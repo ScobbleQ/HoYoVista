@@ -1,11 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { embedColors } from "../../config.js";
-import { fetchLinkedAccount } from "../hoyolab/fetchLinkedAccount.js";
-import { MongoDB } from "../class/mongo.js";
-import { fetchGameIndex } from "../hoyolab/fetchGameIndex.js";
-import { prettyStats } from "../utils/pretty.js";
-import { createEmbed } from "../utils/createEmbed.js";
-import { Game } from "../hoyolab/constants.js";
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { embedColors } from '../../config.js';
+import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
+import { MongoDB } from '../class/mongo.js';
+import { fetchGameIndex } from '../hoyolab/fetchGameIndex.js';
+import { prettyStats } from '../utils/pretty.js';
+import { createEmbed } from '../utils/createEmbed.js';
+import { Game } from '../hoyolab/constants.js';
 
 // TODO:
 // display personalized stats
@@ -13,12 +13,12 @@ import { Game } from "../hoyolab/constants.js";
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("profile")
-        .setDescription("view game profile")
+        .setName('profile')
+        .setDescription('view game profile')
         .addStringOption((option) =>
             option
-                .setName("account")
-                .setDescription("The account to view the profile for.")
+                .setName('account')
+                .setDescription('The account to view the profile for.')
                 .setRequired(true)
                 .setAutocomplete(true)
         )
@@ -30,9 +30,9 @@ export default {
             exclude: [Game.STARRAIL, Game.HONKAI],
         });
 
-        if (focusedOption.name === "account") {
+        if (focusedOption.name === 'account') {
             if (retcode !== 1 || !data) {
-                return await interaction.respond([{ name: message, value: "-1" }]);
+                return await interaction.respond([{ name: message, value: '-1' }]);
             }
 
             const filtered = data.filter((choice) =>
@@ -49,8 +49,8 @@ export default {
     },
     async execute(interaction) {
         // fetch gameId and send initial feedback message
-        const gameId = interaction.options.getString("account");
-        const fetchingEmbed = createEmbed("Retrieving your data. Please wait...", embedColors.warning);
+        const gameId = interaction.options.getString('account');
+        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -59,21 +59,21 @@ export default {
         const { retcode, data: user } = await mongo.getUserData(interaction.user.id);
 
         // error code + no account
-        if (gameId === "-1" && retcode === -1) {
+        if (gameId === '-1' && retcode === -1) {
             const embed = createEmbed(
-                "You are not registered. Please use the `/register` command to create an account."
+                'You are not registered. Please use the `/register` command to create an account.'
             );
             return interaction.editReply({ embeds: [embed] });
         }
 
         // increment command usage count
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: "stats.command_used", value: 1 });
+            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
         }
 
         // error code + account
-        if (gameId === "-1" && retcode === 1) {
-            const embed = createEmbed("None of your linked games are supported for this command.");
+        if (gameId === '-1' && retcode === 1) {
+            const embed = createEmbed('None of your linked games are supported for this command.');
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -124,9 +124,9 @@ export default {
         // add stat overview
         const gameStats = gameIndexData.stats;
         const statDescription = Object.entries(gameStats)
-            .filter(([_, value]) => typeof value === "number" || typeof value === "string")
+            .filter(([_, value]) => typeof value === 'number' || typeof value === 'string')
             .map(([key, value]) => `${prettyStats[key] || key}: ${value}`)
-            .join("\n");
+            .join('\n');
         embed.setDescription(statDescription);
 
         await interaction.editReply({ embeds: [embed] });

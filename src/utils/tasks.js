@@ -1,7 +1,7 @@
-import { MongoDB } from "../class/mongo.js";
-import { performCheckin } from "../hoyolab/checkin.js";
-import { redeemCode, cleanAttemptedCodes } from "../hoyolab/redeem.js";
-import logger from "./logger.js";
+import { MongoDB } from '../class/mongo.js';
+import { performCheckin } from '../hoyolab/checkin.js';
+import { redeemCode, cleanAttemptedCodes } from '../hoyolab/redeem.js';
+import logger from './logger.js';
 
 export const autoCheckin = async (client) => {
     // Random delay between 0 and 55 minutes
@@ -10,10 +10,10 @@ export const autoCheckin = async (client) => {
 
     const query = {
         $or: [
-            { "linked_games.genshin.auto_checkin": true },
-            { "linked_games.honkai3rd.auto_checkin": true },
-            { "linked_games.hkrpg.auto_checkin": true },
-            { "linked_games.zzz.auto_checkin": true },
+            { 'linked_games.genshin.auto_checkin': true },
+            { 'linked_games.honkai3rd.auto_checkin': true },
+            { 'linked_games.hkrpg.auto_checkin': true },
+            { 'linked_games.zzz.auto_checkin': true },
         ],
     };
 
@@ -32,7 +32,7 @@ export const autoCheckin = async (client) => {
             });
 
             if (user.settings.collect_data) {
-                mongo.increment(user.id, { field: "stats.total_checkin", value: checkin.amount });
+                mongo.increment(user.id, { field: 'stats.total_checkin', value: checkin.amount });
             }
 
             if (user.settings.to_notify_checkin) {
@@ -42,11 +42,11 @@ export const autoCheckin = async (client) => {
                     // no DM permission, disable notifications if enabled
                     if (err.code === 50007 && to_notify_checkin) {
                         mongo.set(user.discord_id, {
-                            field: "settings.to_notify_checkin",
+                            field: 'settings.to_notify_checkin',
                             value: false,
                         });
                     } else {
-                        console.log("error sending message to " + user.discord_id + " with error " + err.code);
+                        console.log('error sending message to ' + user.discord_id + ' with error ' + err.code);
                     }
                 }
             }
@@ -64,10 +64,10 @@ export const autoCheckin = async (client) => {
 export const autoRedeem = async (client) => {
     const query = {
         $or: [
-            { "linked_games.genshin.auto_redeem": true },
-            { "linked_games.honkai3rd.auto_redeem": true },
-            { "linked_games.hkrpg.auto_redeem": true },
-            { "linked_games.zzz.auto_redeem": true },
+            { 'linked_games.genshin.auto_redeem': true },
+            { 'linked_games.honkai3rd.auto_redeem': true },
+            { 'linked_games.hkrpg.auto_redeem': true },
+            { 'linked_games.zzz.auto_redeem': true },
         ],
     };
 
@@ -75,7 +75,7 @@ export const autoRedeem = async (client) => {
     const { data: users } = await mongo.find(query);
 
     users.map(async (user) => {
-        console.log("starting auto redeem for " + user.discord_id);
+        console.log('starting auto redeem for ' + user.discord_id);
         try {
             const redeem = await redeemCode(user.discord_id, {
                 arrayOfGameId: Object.values(user.linked_games).map((game) => game.game_id),
@@ -87,7 +87,7 @@ export const autoRedeem = async (client) => {
             });
 
             if (user.settings.collect_data) {
-                mongo.increment(user.id, { field: "stats.total_redeem", value: redeem.amount });
+                mongo.increment(user.id, { field: 'stats.total_redeem', value: redeem.amount });
             }
 
             if (user.settings.to_notify_redeem && redeem.embeds.length > 0) {
@@ -97,11 +97,11 @@ export const autoRedeem = async (client) => {
                     // no DM permission, disable notifications if enabled
                     if (err.code === 50007 && to_notify_redeem) {
                         mongo.set(user.discord_id, {
-                            field: "settings.to_notify_redeem",
+                            field: 'settings.to_notify_redeem',
                             value: false,
                         });
                     } else {
-                        console.log("error sending message to " + user.discord_id + " with error " + err.code);
+                        console.log('error sending message to ' + user.discord_id + ' with error ' + err.code);
                     }
                 }
             }

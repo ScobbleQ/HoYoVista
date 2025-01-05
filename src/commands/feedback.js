@@ -10,17 +10,17 @@ import {
     WebhookClient,
     codeBlock,
     MessageFlags,
-} from "discord.js";
-import { config, embedColors } from "../../config.js";
+} from 'discord.js';
+import { config, embedColors } from '../../config.js';
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("feedback")
-        .setDescription("Send feedback to the developer.")
+        .setName('feedback')
+        .setDescription('Send feedback to the developer.')
         .setIntegrationTypes([0, 1])
         .setContexts([0, 1, 2]),
     async execute(interaction) {
-        const dev = await interaction.client.users.fetch("755897312357777550");
+        const dev = await interaction.client.users.fetch('755897312357777550');
 
         const embed = new EmbedBuilder()
             .setColor(embedColors.primary)
@@ -30,26 +30,26 @@ export default {
             );
 
         const feedbackButton = new ButtonBuilder()
-            .setCustomId("feedback")
-            .setLabel("Give Feedback")
+            .setCustomId('feedback')
+            .setLabel('Give Feedback')
             .setStyle(ButtonStyle.Primary)
-            .setEmoji("<:CustomerSurvey:1278461302573891655>");
+            .setEmoji('<:CustomerSurvey:1278461302573891655>');
 
         const row = new ActionRowBuilder().addComponents(feedbackButton);
 
         await interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });
     },
     async handleButtonClick(interaction) {
-        const feedbackModal = new ModalBuilder().setCustomId("feedback").setTitle("Feedback");
+        const feedbackModal = new ModalBuilder().setCustomId('feedback').setTitle('Feedback');
         const type = new TextInputBuilder()
-            .setCustomId("feedback_type")
-            .setLabel("Type of Feedback")
-            .setPlaceholder("Bug reports, suggestions, etc.")
+            .setCustomId('feedback_type')
+            .setLabel('Type of Feedback')
+            .setPlaceholder('Bug reports, suggestions, etc.')
             .setStyle(TextInputStyle.Short);
         const feedback = new TextInputBuilder()
-            .setCustomId("feedback_text")
-            .setLabel("Feedback")
-            .setPlaceholder("Type your feedback here....")
+            .setCustomId('feedback_text')
+            .setLabel('Feedback')
+            .setPlaceholder('Type your feedback here....')
             .setStyle(TextInputStyle.Paragraph);
 
         const row1 = new ActionRowBuilder().addComponents(type);
@@ -66,14 +66,14 @@ export default {
 
         const embed = new EmbedBuilder()
             .setColor(embedColors.primary)
-            .setTitle("Feedback Modal Submission")
+            .setTitle('Feedback Modal Submission')
             .setDescription(
-                `${codeBlock("yaml", "Feedback Type")}\n${interaction.fields.getTextInputValue("feedback_type")}\n\n${codeBlock("yaml", "Content")}\n${interaction.fields.getTextInputValue("feedback_text")}`
+                `${codeBlock('yaml', 'Feedback Type')}\n${interaction.fields.getTextInputValue('feedback_type')}\n\n${codeBlock('yaml', 'Content')}\n${interaction.fields.getTextInputValue('feedback_text')}`
             );
 
         await webhookClient.send({
-            content: "",
-            username: interaction.user.username + " [" + interaction.user.id + "]",
+            content: '',
+            username: interaction.user.username + ' [' + interaction.user.id + ']',
             avatarURL: interaction.user.displayAvatarURL(),
             embeds: [embed],
         });
@@ -82,8 +82,8 @@ export default {
             embeds: [
                 new EmbedBuilder()
                     .setColor(embedColors.success)
-                    .setTitle("Feedback Submitted")
-                    .setDescription("Your feedback has been successfully submitted. Thank you for your input!"),
+                    .setTitle('Feedback Submitted')
+                    .setDescription('Your feedback has been successfully submitted. Thank you for your input!'),
             ],
             components: [],
         });

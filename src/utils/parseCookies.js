@@ -4,10 +4,10 @@ export const parseCookies = (data) => {
         return match ? match[1] : null;
     };
 
-    const ltmid_v2 = getValue(data, "ltmid_v2");
-    const ltoken_v2 = getValue(data, "ltoken_v2");
-    const ltuid_v2 = getValue(data, "ltuid_v2");
-    const mi18nLang = getValue(data, "mi18nLang");
+    const ltmid_v2 = getValue(data, 'ltmid_v2');
+    const ltoken_v2 = getValue(data, 'ltoken_v2');
+    const ltuid_v2 = getValue(data, 'ltuid_v2');
+    const mi18nLang = getValue(data, 'mi18nLang');
 
     return {
         ltmid_v2: ltmid_v2,

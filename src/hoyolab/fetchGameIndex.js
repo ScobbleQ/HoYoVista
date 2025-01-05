@@ -1,5 +1,5 @@
-import axios from "axios";
-import { WEB_HEADER, GAME_INDEX_URL } from "../utils/routes.js";
+import axios from 'axios';
+import { WEB_HEADER, GAME_INDEX_URL } from './routes.js';
 
 export const fetchGameIndex = async (
     { ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang },
@@ -10,8 +10,8 @@ export const fetchGameIndex = async (
     const response = await axios.get(url, { headers });
 
     if (response.status === 200) {
-        return { retcode: 1, message: "Success", data: response.data };
+        return { retcode: 1, message: 'Success', data: response.data };
     } else {
-        return { retcode: -1, message: "Failed to fetch game index.", data: null };
+        return { retcode: -1, message: 'Failed to fetch game index.', data: null };
     }
 };

@@ -1,5 +1,5 @@
-import { Events } from "discord.js";
-import logger from "../utils/logger.js";
+import { Events } from 'discord.js';
+import logger from '../utils/logger.js';
 
 export default {
     name: Events.InteractionCreate,
@@ -7,7 +7,7 @@ export default {
         const client = interaction.client;
 
         const getCommandNameFromCustomId = (customId) => {
-            return customId.split("-")[0];
+            return customId.split('-')[0];
         };
 
         // Handle Slash Commands
@@ -26,7 +26,7 @@ export default {
                     stack: error.stack,
                 });
                 await interaction.reply({
-                    content: "There was an error while executing this command!",
+                    content: 'There was an error while executing this command!',
                     ephemeral: true,
                 });
             }
@@ -47,7 +47,7 @@ export default {
                     stack: error.stack,
                 });
                 await interaction.reply({
-                    content: "There was an error while executing this autocomplete!",
+                    content: 'There was an error while executing this autocomplete!',
                     ephemeral: true,
                 });
             }
@@ -57,7 +57,7 @@ export default {
             const commandName = getCommandNameFromCustomId(interaction.customId);
             const command = client.commands.get(commandName);
 
-            if (!command || typeof command.handleModalSubmit !== "function") {
+            if (!command || typeof command.handleModalSubmit !== 'function') {
                 logger.warn(`No modal handler for ${interaction.customId} (command: ${commandName}) was found.`);
                 return;
             }
@@ -69,7 +69,7 @@ export default {
                     stack: error.stack,
                 });
                 await interaction.reply({
-                    content: "There was an error handling this modal!",
+                    content: 'There was an error handling this modal!',
                     ephemeral: true,
                 });
             }
@@ -79,7 +79,7 @@ export default {
             const commandName = getCommandNameFromCustomId(interaction.customId);
             const command = client.commands.get(commandName);
 
-            if (!command || typeof command.handleButtonClick !== "function") {
+            if (!command || typeof command.handleButtonClick !== 'function') {
                 logger.warn(`No button handler for ${interaction.customId} (command: ${commandName}) was found.`);
                 return;
             }
@@ -91,7 +91,7 @@ export default {
                     stack: error.stack,
                 });
                 await interaction.reply({
-                    content: "There was an error handling this button interaction!",
+                    content: 'There was an error handling this button interaction!',
                     ephemeral: true,
                 });
             }
@@ -101,7 +101,7 @@ export default {
             const commandName = getCommandNameFromCustomId(interaction.customId);
             const command = client.commands.get(commandName);
 
-            if (!command || typeof command.handleSelectMenu !== "function") {
+            if (!command || typeof command.handleSelectMenu !== 'function') {
                 logger.warn(`No select menu handler for ${interaction.customId} (command: ${commandName}) was found.`);
                 return;
             }
@@ -109,11 +109,11 @@ export default {
             try {
                 await command.handleSelectMenu(interaction);
             } catch (error) {
-                logger.error(`Error handling select menu interaction ${interaction.customId.split("_")[0]}:`, {
+                logger.error(`Error handling select menu interaction ${interaction.customId.split('_')[0]}:`, {
                     stack: error.stack,
                 });
                 await interaction.reply({
-                    content: "There was an error handling this select menu interaction!",
+                    content: 'There was an error handling this select menu interaction!',
                     ephemeral: true,
                 });
             }

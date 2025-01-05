@@ -1,24 +1,24 @@
-import { SlashCommandBuilder } from "discord.js";
-import { embedColors } from "../../config.js";
-import { fetchLinkedAccount } from "../hoyolab/fetchLinkedAccount.js";
-import { MongoDB } from "../class/mongo.js";
-import { createEmbed } from "../utils/createEmbed.js";
-import { Game } from "../hoyolab/constants.js";
-import { redeemCode } from "../hoyolab/redeem.js";
+import { SlashCommandBuilder } from 'discord.js';
+import { embedColors } from '../../config.js';
+import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
+import { MongoDB } from '../class/mongo.js';
+import { createEmbed } from '../utils/createEmbed.js';
+import { Game } from '../hoyolab/constants.js';
+import { redeemCode } from '../hoyolab/redeem.js';
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("redeem")
-        .setDescription("Redeem codes for in-game rewards")
+        .setName('redeem')
+        .setDescription('Redeem codes for in-game rewards')
         .addStringOption((option) =>
             option
-                .setName("account")
-                .setDescription("The account to redeem code for.")
+                .setName('account')
+                .setDescription('The account to redeem code for.')
                 .setRequired(false)
                 .setAutocomplete(true)
         )
         .addStringOption((option) =>
-            option.setName("code").setDescription("The code to redeem seperated by -,|/:").setRequired(false)
+            option.setName('code').setDescription('The code to redeem seperated by -,|/:').setRequired(false)
         )
         .setIntegrationTypes([0, 1])
         .setContexts([0, 1, 2]),
@@ -28,9 +28,9 @@ export default {
             exclude: [Game.STARRAIL],
         });
 
-        if (focusedOption.name === "account") {
+        if (focusedOption.name === 'account') {
             if (retcode !== 1 || !data) {
-                return await interaction.respond([{ name: message, value: "-1" }]);
+                return await interaction.respond([{ name: message, value: '-1' }]);
             }
 
             const filtered = data.filter((choice) =>
@@ -49,9 +49,9 @@ export default {
         await interaction.deferReply();
 
         // fetch gameId and send initial feedback message
-        const gameId = interaction.options.getString("account") || "0";
-        const codes = interaction.options.getString("code") || "";
-        const fetchingEmbed = createEmbed("Retrieving your data. Please wait...", embedColors.warning);
+        const gameId = interaction.options.getString('account') || '0';
+        const codes = interaction.options.getString('code') || '';
+        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
         await interaction.editReply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -62,23 +62,23 @@ export default {
         // no account
         if (retcode === -1) {
             const embed = createEmbed(
-                "You are not registered. Please use the `/register` command to create an account."
+                'You are not registered. Please use the `/register` command to create an account.'
             );
             return interaction.editReply({ embeds: [embed] });
         }
 
         // increment command usage count, account confirmed
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: "stats.command_used", value: 1 });
+            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
         }
 
         // error code OR no linked games
-        if (gameId === "-1" || !user.linked_games) {
-            const embed = createEmbed("Link your hoyolab account to redeem codes.");
+        if (gameId === '-1' || !user.linked_games) {
+            const embed = createEmbed('Link your hoyolab account to redeem codes.');
             return interaction.editReply({ embeds: [embed] });
         }
 
-        const gamesToRedeem = gameId === "0" ? Object.values(user.linked_games).map((game) => game.game_id) : [gameId];
+        const gamesToRedeem = gameId === '0' ? Object.values(user.linked_games).map((game) => game.game_id) : [gameId];
         const userFetchTime = Date.now() - startUserFetchTime;
 
         // send querying message (successful account retrieval)
@@ -99,13 +99,13 @@ export default {
 
         if (user.settings.collect_data) {
             mongo.increment(interaction.user.id, {
-                field: "stats.total_redeem",
+                field: 'stats.total_redeem',
                 value: redeem.amount,
             });
         }
 
         if (redeem.embeds.length === 0) {
-            const embed = createEmbed("No new codes found.");
+            const embed = createEmbed('No new codes found.');
             return interaction.editReply({ embeds: [embed] });
         }
 
