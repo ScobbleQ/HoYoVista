@@ -39,6 +39,27 @@ export const redeemCode = async (
 
             await Promise.all(
                 unredeemedCodes.map(async (code) => {
+                    // special handling for honkai
+                    if (gameId === Game.HONKAI) {
+                        if (!automatic || (automatic && toNotify)) {
+                            embeds.push(
+                                new EmbedBuilder()
+                                    .setColor(embedColors.primary)
+                                    .setTitle('New Code Available')
+                                    .setDescription(`Code: ${code.code}\nReward: ${code.reward}`)
+                                    .setFooter({ text: 'Please redeem manually in-game.' })
+                            );
+                        }
+
+                        attemptedCodes.push(code.code);
+                        mongo.push(id, {
+                            field: `linked_games.${gameKey}.attempted_codes`,
+                            value: code.code,
+                        });
+
+                        return;
+                    }
+
                     const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
 
                     if (data.retcode === 0) {
