@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { config } from '../config.js';
@@ -7,7 +7,7 @@ import { MongoDB } from './class/mongo.js';
 import logger from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds],
@@ -18,11 +18,11 @@ client.commands = new Collection();
 
 async function initializeDiscordBot() {
     try {
-        const foldersPath = path.join(__dirname, 'commands');
-        const commandFolders = fs.readdirSync(foldersPath);
+        const foldersPath = join(__dirname, 'commands');
+        const commandFolders = readdirSync(foldersPath);
 
         for (const file of commandFolders) {
-            const filePath = path.join(foldersPath, file);
+            const filePath = join(foldersPath, file);
             const command = await import(filePath);
             if ('data' in command.default && 'execute' in command.default) {
                 client.commands.set(command.default.data.name, command.default);
@@ -31,11 +31,11 @@ async function initializeDiscordBot() {
             }
         }
 
-        const eventsPath = path.join(__dirname, 'events');
-        const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
+        const eventsPath = join(__dirname, 'events');
+        const eventFiles = readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
         for (const file of eventFiles) {
-            const filePath = path.join(eventsPath, file);
+            const filePath = join(eventsPath, file);
             const event = await import(filePath);
             if (event.default.once) {
                 client.once(event.default.name, (...args) => event.default.execute(...args));

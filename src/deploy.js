@@ -1,20 +1,20 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REST, Routes } from 'discord.js';
 import { config } from '../config.js';
 import logger from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 const commands = [];
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath).filter((file) => file.endsWith('.js'));
+const foldersPath = join(__dirname, 'commands');
+const commandFolders = readdirSync(foldersPath).filter((file) => file.endsWith('.js'));
 
 async function loadCommands() {
     for (const file of commandFolders) {
-        const filePath = path.join(foldersPath, file);
+        const filePath = join(foldersPath, file);
         const command = await import(filePath);
         const cmd = command.default;
 
