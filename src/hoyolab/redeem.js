@@ -87,6 +87,7 @@ export const redeemCode = async (
                         });
                     } else {
                         // not automatic, notify user of failed redemption
+                        // MIGHT BE REMOVED IN THE FUTURE
                         if (!automatic) {
                             embeds.push(
                                 new EmbedBuilder()
