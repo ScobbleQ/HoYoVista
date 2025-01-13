@@ -195,6 +195,23 @@ export class MongoDB {
         }
     }
 
+    async unset(id, { field }) {
+        try {
+            await this.#collection.updateOne(
+                { discord_id: id },
+                {
+                    $unset: {
+                        [field]: "", // value is ignored
+                    },
+                }
+            );
+    
+            return { retcode: 1 };
+        } catch (error) {
+            return { retcode: -1, message: error.message };
+        }
+    }
+
     /**
      * Returns the singleton instance of the MongoDB class
      * @returns {MongoDB} - The singleton instance of the MongoDB class
