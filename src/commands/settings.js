@@ -143,10 +143,12 @@ export default {
         );
 
         const menu = this.createPageMenu(page);
+        const ephemeral = data.settings.is_private;
+
         return {
             embeds: [embed],
             components: [menu, buttons],
-            ephemeral: data.settings.is_private,
+            flags: [ephemeral ? MessageFlags.Ephemeral : 0],
         };
     },
     renderAutoSettings(data, type, page) {
