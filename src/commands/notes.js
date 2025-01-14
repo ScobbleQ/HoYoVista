@@ -231,12 +231,14 @@ export default {
                     )
             );
         } else if (gameId === Game.STARRAIL) {
+            const trailblazerPowderEmoji = '<:6_TrailblazerPowder:1328559271423770655> ';
+            const reservedPowderEmoji = '<:6_ReservedPowder:1328559285185155196>';
+
             const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
             const staminaRecover =
                 notes.stamina_recover_time === 0 ? 'Fully Restored' : `Fully restores <t:${notes.stamina_full_ts}:R>`;
-            const staminaDescription = `<:Hsr_TrailblazerPowder:1328559271423770655> **Trailblaze Power** ${stamina}\n${staminaRecover}`;
-            const staminaReserved = notes.is_reserve_stamina_full === true ? 'Full' : notes.current_reserve_stamina;
-            const staminaReservedDescription = `<:Hsr_ReservedPowder:1328559285185155196> **Reserved Trailblaze Power** ${staminaReserved}`;
+            const staminaReserved =
+                notes.is_reserve_stamina_full === true ? 'Fully Maxed' : notes.current_reserve_stamina;
 
             const dailyTraining = `${notes.current_train_score}/${notes.max_train_score}`;
             const echoOfWar = `${notes.weekly_cocoon_cnt}/${notes.weekly_cocoon_limit}`;
@@ -249,11 +251,20 @@ export default {
                         name: `${nickname} (${game_role_id})`,
                         iconURL: GameIconUrl[gameId],
                     })
-                    .setDescription(`${staminaDescription}\n${staminaReservedDescription}`)
                     .addFields(
-                        { name: 'Daily Training', value: dailyTraining },
-                        { name: 'Echo of War', value: echoOfWar },
-                        { name: 'Weekly Points', value: roguePoint }
+                        {
+                            name: `${trailblazerPowderEmoji} Trailblaze Power ${stamina}`,
+                            value: staminaRecover,
+                            inline: false,
+                        },
+                        {
+                            name: `${reservedPowderEmoji} Reserved Trailblaze Power`,
+                            value: String(staminaReserved),
+                            inline: false,
+                        },
+                        { name: 'Daily Training', value: dailyTraining, inline: true },
+                        { name: 'Echo of War', value: echoOfWar, inline: true },
+                        { name: 'Weekly Points', value: roguePoint, inline: true }
                     )
             );
 
