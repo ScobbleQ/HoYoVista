@@ -241,50 +241,39 @@ export default {
                 notes.is_reserve_stamina_full === true ? 'Fully Maxed' : notes.current_reserve_stamina;
 
             const dailyTraining = `${notes.current_train_score}/${notes.max_train_score}`;
+            const assignments = `${notes.accepted_epedition_num}/${notes.total_expedition_num}`;
             const echoOfWar = `${notes.weekly_cocoon_cnt}/${notes.weekly_cocoon_limit}`;
             const roguePoint = `${notes.current_rogue_score}/${notes.max_rogue_score}`;
 
-            embeds.push(
-                new EmbedBuilder()
-                    .setColor(embedColors.primary)
-                    .setAuthor({
-                        name: `${nickname} (${game_role_id})`,
-                        iconURL: GameIconUrl[gameId],
-                    })
-                    .addFields(
-                        {
-                            name: `${trailblazerPowderEmoji} ${stamina}`,
-                            value: staminaRecover,
-                            inline: false,
-                        },
-                        {
-                            name: `${reservedPowderEmoji} ${staminaReserved}`,
-                            value: 'Reserved Trailblaze Power',
-                            inline: false,
-                        },
-                        { name: 'Daily Training', value: dailyTraining, inline: true },
-                        { name: 'Echo of War', value: echoOfWar, inline: true },
-                        { name: 'Weekly Points', value: roguePoint, inline: true }
-                    )
-            );
+            const embed = new EmbedBuilder()
+                .setColor(embedColors.primary)
+                .setAuthor({
+                    name: `${nickname} (${game_role_id})`,
+                    iconURL: GameIconUrl[gameId],
+                })
+                .addFields(
+                    {
+                        name: `${trailblazerPowderEmoji} ${stamina}`,
+                        value: staminaRecover,
+                        inline: false,
+                    },
+                    {
+                        name: `${reservedPowderEmoji} ${staminaReserved}`,
+                        value: 'Reserved Trailblaze Power',
+                        inline: false,
+                    },
+                    { name: 'Daily Training', value: dailyTraining, inline: true },
+                    { name: 'Assignments', value: assignments, inline: true },
+                    { name: 'Echo of War', value: echoOfWar, inline: true },
+                    { name: 'Weekly Points', value: roguePoint, inline: true }
+                );
 
-            if (notes.total_expedition_num > 0) {
-                const expeditionEmbed = new EmbedBuilder().setColor(embedColors.primary).setTitle('Assignments');
-
-                notes.expeditions.forEach((expedition) => {
-                    const status =
-                        expedition.status === 'Ongoing'
-                            ? `Completes <t:${Math.floor(Date.now() / 1000) + expedition.remaining_time}:R>`
-                            : 'Completed';
-
-                    expeditionEmbed.addFields({
-                        name: expedition.name,
-                        value: status,
-                    });
-                });
-
-                embeds.push(expeditionEmbed);
+            if (notes.rogue_tourn_weekly_unlocked) {
+                const bonusSynchronicity = `${notes.rogue_tourn_weekly_cur}/${notes.rogue_tourn_weekly_max}`;
+                embed.addFields({ name: 'Bonus Synchronicity Points', value: bonusSynchronicity, inline: true });
             }
+
+            embeds.push(embed);
         }
 
         await interaction.editReply({ embeds: embeds });
