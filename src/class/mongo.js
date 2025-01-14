@@ -201,11 +201,11 @@ export class MongoDB {
                 { discord_id: id },
                 {
                     $unset: {
-                        [field]: "", // value is ignored
+                        [field]: '', // value is ignored
                     },
                 }
             );
-    
+
             return { retcode: 1 };
         } catch (error) {
             return { retcode: -1, message: error.message };
