@@ -231,7 +231,7 @@ export default {
                     )
             );
         } else if (gameId === Game.STARRAIL) {
-            const trailblazerPowderEmoji = '<:6_TrailblazerPowder:1328559271423770655> ';
+            const trailblazerPowderEmoji = '<:6_TrailblazerPowder:1328559271423770655>';
             const reservedPowderEmoji = '<:6_ReservedPowder:1328559285185155196>';
 
             const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
