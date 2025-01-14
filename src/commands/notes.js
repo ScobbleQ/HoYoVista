@@ -253,13 +253,13 @@ export default {
                     })
                     .addFields(
                         {
-                            name: `${trailblazerPowderEmoji} Trailblaze Power ${stamina}`,
+                            name: `${trailblazerPowderEmoji} ${stamina}`,
                             value: staminaRecover,
                             inline: false,
                         },
                         {
-                            name: `${reservedPowderEmoji} Reserved Trailblaze Power`,
-                            value: String(staminaReserved),
+                            name: `${reservedPowderEmoji} ${staminaReserved}`,
+                            value: 'Reserved Trailblaze Power',
                             inline: false,
                         },
                         { name: 'Daily Training', value: dailyTraining, inline: true },
