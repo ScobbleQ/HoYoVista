@@ -10,7 +10,7 @@ export const fetchNotes = async ({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang }, {
             ? APP_HEADER({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang })
             : WEB_HEADER({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang });
 
-    if (game_id === Game.STARRAIL) {
+    if (game_id === Game.STARRAIL || game_id === Game.HONKAI) {
         headers['DS'] = generateDS();
         headers['x-rpc-client_type'] = '5';
         headers['Referer'] = 'https://act.hoyolab.com/';
