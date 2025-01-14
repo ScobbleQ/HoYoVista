@@ -30,7 +30,6 @@ export const WEB_HEADER = ({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang }) => {
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'en-US,en;q=0.9',
         Cookie: `ltmid_v2=${ltmid_v2}; ltoken_v2=${ltoken_v2}; ltuid_v2=${ltuid_v2}; mi18nLang=${mi18nLang}; account_id_v2=${ltuid_v2}; account_mid_v2=${ltmid_v2}`,
-        DS: '1734664931,tZksz2,3ff162e3af11f710d30106da9e1afa5f',
         Origin: DEFAULT_ORIGIN,
         Priority: 'u=3, i',
         Referer: DEFAULT_REFERER,
@@ -47,7 +46,7 @@ export const APP_HEADER = ({ ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang }) => {
     const header = {
         'Accept-Encoding': 'gzip, deflate, br',
         'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBSOversea/3.3.1',
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBSOversea/3.5.0',
         Referer: DEFAULT_REFERER,
         Cookie: `ltmid_v2=${ltmid_v2}; ltoken_v2=${ltoken_v2}; ltuid_v2=${ltuid_v2}; mi18nLang=${mi18nLang}; account_id_v2=${ltuid_v2}; account_mid_v2=${ltmid_v2}`,
         Origin: DEFAULT_ORIGIN,
