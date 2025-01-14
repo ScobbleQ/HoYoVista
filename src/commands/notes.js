@@ -9,9 +9,8 @@ import { GameIconUrl } from '../hoyolab/routes.js';
 import { superstringDimensionTier } from '../hoyolab/gameConstants.js';
 
 // TODO:
-// add STARRAIL and HONKAI
 // GENSHIN is COMPLETE (may add parametricT)
-// ZZZ is COMPLETE
+// may improve ZZZ and GENSHIN
 
 export default {
     data: new SlashCommandBuilder()
