@@ -42,13 +42,19 @@ export default {
 
         // Check if the user has already linked their HoYoLAB account
         if (data.hoyolab_cookies) {
-            const embed = createEmbed('Your HoYoLAB account is already linked. If you wish to unlink it, press the button below.', embedColors.primary);
+            const embed = createEmbed(
+                'Your HoYoLAB account is already linked. If you wish to unlink it, press the button below.',
+                embedColors.primary
+            );
             const unlinkButton = new ButtonBuilder()
                 .setCustomId('hoyolink-unlink')
                 .setLabel('Unlink HoYoLAB Account')
                 .setStyle(ButtonStyle.Danger);
 
-            return interaction.editReply({ embeds: [embed], components: [new ActionRowBuilder().addComponents(unlinkButton)] });
+            return interaction.editReply({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(unlinkButton)],
+            });
         }
 
         const embed = createEmbed(
@@ -119,7 +125,10 @@ export default {
             const embed = createEmbed(`\`\`\`json\n${sampleCookies}\n\`\`\``, embedColors.primary);
             await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         } else if (button === 'unlink') {
-            const embed = createEmbed('This action is destructive and cannot be reversed, continue?', embedColors.error);
+            const embed = createEmbed(
+                'This action is destructive and cannot be reversed, continue?',
+                embedColors.error
+            );
             const confirmButton = new ButtonBuilder()
                 .setCustomId('hoyolink-confirm')
                 .setLabel('Confirm')
@@ -128,8 +137,11 @@ export default {
                 .setCustomId('hoyolink-cancel')
                 .setLabel('Cancel')
                 .setStyle(ButtonStyle.Primary);
-            
-            await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(confirmButton, cancelButton)] });
+
+            await interaction.update({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(confirmButton, cancelButton)],
+            });
         } else if (button === 'confirm') {
             const mongo = MongoDB.getInstance();
 
@@ -137,7 +149,7 @@ export default {
                 { field: 'stats.total_checkin' },
                 { field: 'stats.total_redeem' },
                 { field: 'settings.to_notify_checkin' },
-                { field: 'settings.to_notify_redeem'},
+                { field: 'settings.to_notify_redeem' },
                 { field: 'hoyolab_cookies' },
                 { field: 'linked_games' },
             ].map((update) => mongo.unset(interaction.user.id, update));

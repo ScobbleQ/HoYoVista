@@ -28,7 +28,7 @@ export default {
     async autocomplete(interaction) {
         const focusedOption = interaction.options.getFocused(true);
         const { retcode, message, data } = await fetchLinkedAccount(interaction.user.id, {
-            exclude: [Game.STARRAIL, Game.HONKAI],
+            exclude: [Game.HONKAI],
         });
 
         if (focusedOption.name === 'account') {
@@ -231,7 +231,49 @@ export default {
                     )
             );
         } else if (gameId === Game.STARRAIL) {
-            console.dir(notes, { depth: null });
+            const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
+            const staminaRecover =
+                notes.stamina_recover_time === 0 ? 'Fully Restored' : `Fully restores <t:${notes.stamina_full_ts}:R>`;
+            const staminaDescription = `<:Hsr_TrailblazerPowder:1328559271423770655> **Trailblaze Power** ${stamina}\n${staminaRecover}`;
+            const staminaReserved = notes.is_reserve_stamina_full === true ? 'Full' : notes.current_reserve_stamina;
+            const staminaReservedDescription = `<:Hsr_ReservedPowder:1328559285185155196> **Reserved Trailblaze Power** ${staminaReserved}`;
+
+            const dailyTraining = `${notes.current_train_score}/${notes.max_train_score}`;
+            const echoOfWar = `${notes.weekly_cocoon_cnt}/${notes.weekly_cocoon_limit}`;
+            const roguePoint = `${notes.current_rogue_score}/${notes.max_rogue_score}`;
+
+            embeds.push(
+                new EmbedBuilder()
+                    .setColor(embedColors.primary)
+                    .setAuthor({
+                        name: `${nickname} (${game_role_id})`,
+                        iconURL: GameIconUrl[gameId],
+                    })
+                    .setDescription(`${staminaDescription}\n${staminaReservedDescription}`)
+                    .addFields(
+                        { name: 'Daily Training', value: dailyTraining },
+                        { name: 'Echo of War', value: echoOfWar },
+                        { name: 'Weekly Points', value: roguePoint }
+                    )
+            );
+
+            if (notes.total_expedition_num > 0) {
+                const expeditionEmbed = new EmbedBuilder().setColor(embedColors.primary).setTitle('Assignments');
+
+                notes.expeditions.forEach((expedition) => {
+                    const status =
+                        expedition.status === 'Ongoing'
+                            ? `Completes <t:${Math.floor(Date.now() / 1000) + expedition.remaining_time}:R>`
+                            : 'Completed';
+
+                    expeditionEmbed.addFields({
+                        name: expedition.name,
+                        value: status,
+                    });
+                });
+
+                embeds.push(expeditionEmbed);
+            }
         }
 
         await interaction.editReply({ embeds: embeds });
