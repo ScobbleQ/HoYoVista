@@ -2,8 +2,8 @@ import { Game, IdToAbbr } from './constants.js';
 
 const BBS_API = 'https://bbs-api-os.hoyolab.com';
 const ACCOUNT_API = 'https://api-account-os.hoyolab.com';
-const HK4E_API = 'https://sg-hk4e-api.hoyolab.com';
-const PUBLIC_API = 'https://sg-public-api.hoyolab.com';
+export const HK4E_API = 'https://sg-hk4e-api.hoyolab.com';
+export const PUBLIC_API = 'https://sg-public-api.hoyolab.com';
 export const DEFAULT_ORIGIN = 'https://act.hoyolab.com';
 export const DEFAULT_REFERER = 'https://hoyolab.com/';
 const SG_ACT = 'https://sg-act-nap-api.hoyolab.com';
@@ -136,6 +136,7 @@ export const GAME_INDEX_URL = ({ game_id, region, game_role_id }) => {
         return `${PUBLIC_API}/event/game_record/${game}/api/index?server=${region}&role_id=${game_role_id}`;
     }
 };
+
 export const DAILY_NOTE_URL = ({ game_id, region, game_role_id }) => {
     switch (game_id) {
         case Game.GENSHIN:
@@ -146,6 +147,17 @@ export const DAILY_NOTE_URL = ({ game_id, region, game_role_id }) => {
             return `${BBS_API}/game_record/honkai3rd/api/note?role_id=${game_role_id}&server=${region}`;
         case Game.ZZZ:
             return `${PUBLIC_API}/event/game_record_zzz/api/zzz/note?server=${region}&role_id=${game_role_id}`;
+    }
+};
+
+export const infoLedgerUrl = ({ game_id, region, game_role_id, month, lang }) => {
+    switch (game_id) {
+        case Game.GENSHIN:
+            return `https://sg-hk4e-api.hoyolab.com/event/ysledgeros/month_info?month=${month}&region=${region}&uid=${game_role_id}`;
+        case Game.STARRAIL:
+            return `https://sg-public-api.hoyolab.com/event/srledger/month_info?lang=${lang}&uid=${game_role_id}&region=${region}&month=${month}`;
+        case Game.ZZZ:
+            return `https://sg-public-api.hoyolab.com/event/nap_ledger/month_info?uid=${game_role_id}&region=${region}&month=${month}`;
     }
 };
 

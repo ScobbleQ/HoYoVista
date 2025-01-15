@@ -37,6 +37,7 @@ export const redeemCode = async (
             const unredeemedCodes =
                 availableCodes[gameKey]?.filter((code) => !attempted_codes.includes(code.code)) || [];
 
+            // might need to swap to for...of loop to ensure sequential redemption with delay
             await Promise.all(
                 unredeemedCodes.map(async (code) => {
                     // special handling for honkai

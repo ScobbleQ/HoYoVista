@@ -218,8 +218,16 @@ export default {
         });
         await Promise.all(gameUpdates);
 
+        // List of commands to show after registration
+        const commands = [
+            '- `/profile` - View statics for the selected game.',
+            '- `/income` - View income for the selected month.',
+            '- `/roadmap` - View planned improvements and features.',
+            '- `/settings` - Access and modify your account settings.',
+        ].join('\n');
+
         const embed = createEmbed(
-            'Your HoYoLAB account has been successfully linked. All game records have been updated and linked to your profile.',
+            'Your HoYoLAB account has been successfully linked. Here are some commands to get you started.\n\n' + commands,
             embedColors.success
         );
         await interaction.editReply({ embeds: [embed] });

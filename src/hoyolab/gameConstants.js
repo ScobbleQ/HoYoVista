@@ -9,3 +9,13 @@ export const superstringDimensionTier = Object.freeze({
     8: 'Redlotus',
     9: 'Nirvana',
 });
+
+export const zenlessRevenueStream = Object.freeze({
+    mail_rewards: 'Mail Rewards',
+    shiyu_rewards: 'Shiyu Defense & Deadly Assult Rewards',
+    daily_activity_rewards: 'Daily Activity Rewards',
+    growth_rewards: 'Development Rewards',
+    event_rewards: 'Event Rewards',
+    hollow_rewards: 'Hallow Zero Rewards',
+    other_rewards: 'Other Rewards',
+});

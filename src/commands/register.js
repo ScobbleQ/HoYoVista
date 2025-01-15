@@ -67,7 +67,7 @@ export default {
 
             // List of commands to show after registration
             const commands = [
-                '- `/hoyolink` - Link your HoYoLAB account with your Discord account.',
+                '- `/hoyolink` - Link/unlink your HoYoLAB account with your Discord account.',
                 '- `/settings` - Access and modify your account settings.',
                 '- `/data` - Manage your data, including viewing or deleting it.',
             ].join('\n');

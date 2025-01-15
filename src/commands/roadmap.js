@@ -14,14 +14,14 @@ export default {
             .addFields(
                 {
                     name: 'Command Improvements',
-                    value: '- [/notes] Honkai: Star Rail and Honkai Impact 3rd support\n- [/profile] Honkai: Star Rail and Honkai Impact 3rd support',
+                    value: '- ~~[/notes] Honkai: Star Rail and Honkai Impact 3rd support~~\n- [/profile] Honkai: Star Rail and Honkai Impact 3rd support\n- [/notes] Improve readability/display of information\n- [/income] Add support for Honkai: Star Rail',
                 },
                 {
                     name: 'New Commands/Features',
-                    value: '- [/account] View HoYoVista account (delete data)\n- [/income] View income for the month (Support all games)\n- [/wiki] Search for information on the wiki (Support all games)\n- [/builds] View character builds (Support all games + EnkaNetwork)',
+                    value: '- ~~[/account] View HoYoVista account (delete data)~~\n- ~~[/income] View income for the month (Support all games)~~\n- [/wiki] Search for information on the wiki (Support all games)\n- [/builds] View character builds (Support all games + EnkaNetwork)',
                 }
             )
-            .setFooter({ text: 'Last updated on Jan 1, 2025. Subject to change.' });
+            .setFooter({ text: 'Last updated on Jan 15, 2025. Subject to change.' });
 
         await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     },
