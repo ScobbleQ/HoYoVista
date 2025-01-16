@@ -1,6 +1,5 @@
 import {
     SlashCommandBuilder,
-    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
@@ -9,12 +8,11 @@ import {
     TextInputStyle,
     MessageFlags,
 } from 'discord.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { MongoDB } from '../class/mongo.js';
-import { embedColors } from '../../config.js';
 import { parseCookies } from '../utils/parseCookies.js';
 import { fetchGameRecord } from '../hoyolab/fetchGameRecord.js';
 import { IdToAbbr } from '../hoyolab/constants.js';
+import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -30,9 +28,9 @@ export default {
 
         // Check if the user is not registered
         if (retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = new errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -42,10 +40,9 @@ export default {
 
         // Check if the user has already linked their HoYoLAB account
         if (data.hoyolab_cookies) {
-            const embed = createEmbed(
-                'Your HoYoLAB account is already linked. If you wish to unlink it, press the button below.',
-                embedColors.primary
-            );
+            const embed = warningEmbed({
+                message: 'Your HoYoLAB account is already linked.\nIf you wish to unlink it, press the button below.',
+            });
             const unlinkButton = new ButtonBuilder()
                 .setCustomId('hoyolink-unlink')
                 .setLabel('Unlink HoYoLAB Account')
@@ -57,10 +54,7 @@ export default {
             });
         }
 
-        const embed = createEmbed(
-            'No HoYoLAB account linked. Press the button below to get started.',
-            embedColors.primary
-        );
+        const embed = warningEmbed({ message: 'No HoYoLAB account linked. Press the button below to get started.' });
 
         const addButton = new ButtonBuilder()
             .setCustomId('hoyolink-add')
@@ -103,10 +97,7 @@ export default {
                 '6. Under the **“Request Headers“** section, locate the `Cookie` field and copy everything after the word **“Cookie:”**.\n' +
                 '7. Click **“Add HoYoLAB Account“**, and paste the cookies into the text field provided.';
 
-            const embed = new EmbedBuilder()
-                .setColor(embedColors.primary)
-                .setTitle('Getting your HoYoLAB cookies')
-                .setDescription(instructions);
+            const embed = primaryEmbed({ title: 'Getting your HoYoLAB cookies', message: instructions });
 
             const sampleButton = new ButtonBuilder()
                 .setCustomId('hoyolink-sample')
@@ -122,25 +113,18 @@ export default {
             const sampleCookies =
                 'ltmid_v2=____; ltoken_v2=v2____; ltuid_v2=____; DEVICEFP=____; HYV_LOGIN_PLATFORM_LIFECYCLE_ID={}; HYV_LOGIN_PLATFORM_LOAD_TIMEOUT={}; HYV_LOGIN_PLATFORM_TRACKING_MAP={}; _HYVUUID=____; _MHYUUID=____; mi18nLang=en-us; account_id_v2=____; account_mid_v2=____; cookie_token_v2=v2____; HYV_LOGIN_PLATFORM_OPTIONAL_AGREEMENT={}';
 
-            const embed = createEmbed(`\`\`\`json\n${sampleCookies}\n\`\`\``, embedColors.primary);
+            const embed = primaryEmbed({ message: `\`\`\`json\n${sampleCookies}\n\`\`\`` });
             await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         } else if (button === 'unlink') {
-            const embed = createEmbed(
-                'This action is destructive and cannot be reversed, continue?',
-                embedColors.error
-            );
+            const embed = errorEmbed({ message: 'This action is destructive and cannot be reversed, continue?' });
             const confirmButton = new ButtonBuilder()
                 .setCustomId('hoyolink-confirm')
                 .setLabel('Confirm')
                 .setStyle(ButtonStyle.Danger);
-            const cancelButton = new ButtonBuilder()
-                .setCustomId('hoyolink-cancel')
-                .setLabel('Cancel')
-                .setStyle(ButtonStyle.Primary);
 
             await interaction.update({
                 embeds: [embed],
-                components: [new ActionRowBuilder().addComponents(confirmButton, cancelButton)],
+                components: [new ActionRowBuilder().addComponents(confirmButton)],
             });
         } else if (button === 'confirm') {
             const mongo = MongoDB.getInstance();
@@ -155,18 +139,15 @@ export default {
             ].map((update) => mongo.unset(interaction.user.id, update));
             await Promise.all(defaultUpdates);
 
-            const embed = createEmbed('Your HoYoLAB account has been successfully unlinked.', embedColors.success);
+            const embed = successEmbed({ message: 'Your HoYoLAB account has been successfully unlinked.' });
             await interaction.update({ embeds: [embed], components: [] });
-        } else if (button === 'cancel') {
-            await interaction.message.delete();
         }
     },
     async handleModalSubmit(interaction) {
-        const loadingEmbed = createEmbed('We are processing your request. Please wait...', embedColors.warning);
+        const loadingEmbed = warningEmbed({ message: 'We are processing your request. Please wait...' });
         await interaction.update({ embeds: [loadingEmbed], components: [] });
 
         const id = interaction.user.id;
-
         const mongo = MongoDB.getInstance();
 
         // Get and parse the cookies
@@ -180,28 +161,31 @@ export default {
         // If any required cookies are missing, show an error message
         if (missingCookies.length > 0) {
             const description = `The cookies provided are invalid or incomplete. The following required cookies are missing: ${missingCookies.map((cookie) => `\`${cookie}\``).join(', ')}. Please copy everything and try again.`;
-            const embed = createEmbed(description);
+            const embed = errorEmbed({ message: description });
 
             return interaction.editReply({ embeds: [embed] });
         }
-
-        const defaultUpdates = [
-            { field: 'stats.total_checkin', value: 0 },
-            { field: 'stats.total_redeem', value: 0 },
-            { field: 'settings.to_notify_checkin', value: true },
-            { field: 'settings.to_notify_redeem', value: true },
-            { field: 'hoyolab_cookies', value: parsedCookies },
-        ].map((update) => mongo.set(id, update));
-        await Promise.all(defaultUpdates);
 
         // Fetch game records using cookies, exit if fail
         const gameRecord = await fetchGameRecord(parsedCookies);
         if (gameRecord.retcode === -1) {
-            const embed = createEmbed('An error occurred while fetching your game data. Please try again later.');
+            const embed = errorEmbed({
+                message: 'An error occurred while fetching your game data. Please try again later.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
-        const gameUpdates = gameRecord.data.data.list.map((game) => {
+        // Check if the user has any linked games
+        const gameList = gameRecord.data?.data?.list;
+        if (!Array.isArray(gameList) || gameList.length === 0) {
+            const embed = errorEmbed({
+                message: 'No games found linked to this account. Please ensure your account has valid game data.',
+            });
+            return interaction.editReply({ embeds: [embed] });
+        }
+
+        // Add every linked games to the user's data
+        const gameUpdates = gameList.map((game) => {
             const gameName = IdToAbbr[game.game_id];
             const gameData = {
                 game_id: String(game.game_id),
@@ -218,6 +202,16 @@ export default {
         });
         await Promise.all(gameUpdates);
 
+        // Set default values for the user's data
+        const defaultUpdates = [
+            { field: 'stats.total_checkin', value: 0 },
+            { field: 'stats.total_redeem', value: 0 },
+            { field: 'settings.to_notify_checkin', value: true },
+            { field: 'settings.to_notify_redeem', value: true },
+            { field: 'hoyolab_cookies', value: parsedCookies },
+        ].map((update) => mongo.set(id, update));
+        await Promise.all(defaultUpdates);
+
         // List of commands to show after registration
         const commands = [
             '- `/profile` - View statics for the selected game.',
@@ -226,10 +220,9 @@ export default {
             '- `/settings` - Access and modify your account settings.',
         ].join('\n');
 
-        const embed = createEmbed(
-            'Your HoYoLAB account has been successfully linked. Here are some commands to get you started.\n\n' + commands,
-            embedColors.success
-        );
+        const embed = successEmbed({
+            message: `Your HoYoLAB account has been successfully linked. Here are some commands to get you started.\n\n${commands}`,
+        });
         await interaction.editReply({ embeds: [embed] });
     },
 };

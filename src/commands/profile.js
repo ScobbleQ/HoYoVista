@@ -1,11 +1,10 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { embedColors } from '../../config.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { MongoDB } from '../class/mongo.js';
 import { fetchGameIndex } from '../hoyolab/fetchGameIndex.js';
 import { prettyStats } from '../utils/pretty.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { Game } from '../hoyolab/constants.js';
+import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 // TODO:
 // display personalized stats
@@ -50,7 +49,7 @@ export default {
     async execute(interaction) {
         // fetch gameId and send initial feedback message
         const gameId = interaction.options.getString('account');
-        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
+        const fetchingEmbed = warningEmbed({ message: 'Retrieving your data. Please wait...' });
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -60,9 +59,9 @@ export default {
 
         // error code + no account
         if (gameId === '-1' && retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -73,7 +72,7 @@ export default {
 
         // error code + account
         if (gameId === '-1' && retcode === 1) {
-            const embed = createEmbed('None of your linked games are supported for this command.');
+            const embed = errorEmbed({ message: 'None of your linked games are supported for this command.' });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -87,10 +86,9 @@ export default {
         const userFetchTime = Date.now() - startUserFetchTime;
 
         // send querying message (successful account retrieval)
-        const queryingEmbed = createEmbed(
-            `Account successfully retrieved in ${userFetchTime}ms.\nFetching stats from HoYoverse...`,
-            embedColors.warning
-        );
+        const queryingEmbed = warningEmbed({
+            message: `Account successfully retrieved in ${userFetchTime}ms.\nFetching profile from HoYoverse...`,
+        });
         await interaction.editReply({ embeds: [queryingEmbed] });
 
         // fetch game index
@@ -102,32 +100,32 @@ export default {
 
         // indexing failed
         if (gameIndex.retcode !== 1) {
-            const errorEmbed = createEmbed(gameIndex.message, embedColors.error);
-            return interaction.editReply({ embeds: [errorEmbed] });
+            const errorEmbeds = errorEmbed({ message: gameIndex.message });
+            return interaction.editReply({ embeds: [errorEmbeds] });
         }
 
         // stats retrieved
         const gameIndexData = gameIndex.data.data;
         const indexFetchTime = Date.now() - indexStartTime;
-        const indexEmbed = createEmbed(
-            `Stats retrieved in ${indexFetchTime}ms.\nPreparing your data...`,
-            embedColors.warning
-        );
+        const indexEmbed = warningEmbed({
+            message: `Profile retrieved in ${indexFetchTime}ms.\nPreparing your data...`,
+        });
         await interaction.editReply({ embeds: [indexEmbed] });
 
-        // create embed
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setAuthor({ name: `${nickname} (${game_role_id})` })
-            .setThumbnail(gameIndexData?.role?.game_head_icon || gameIndexData?.cur_head_icon_url);
-
-        // add stat overview
+        // get stat overview
         const gameStats = gameIndexData.stats;
         const statDescription = Object.entries(gameStats)
             .filter(([_, value]) => typeof value === 'number' || typeof value === 'string')
             .map(([key, value]) => `${prettyStats[key] || key}: ${value}`)
             .join('\n');
-        embed.setDescription(statDescription);
+
+        // create embed
+        const embed = primaryEmbed({
+            title: `${nickname} (${game_role_id})`,
+            author: { name: `${nickname} (${game_role_id})` },
+            description: statDescription,
+            thumbnail: gameIndexData?.role?.game_head_icon || gameIndexData?.cur_head_icon_url,
+        });
 
         await interaction.editReply({ embeds: [embed] });
     },

@@ -1,14 +1,6 @@
-import {
-    SlashCommandBuilder,
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    MessageFlags,
-} from 'discord.js';
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
-import { embedColors } from '../../config.js';
-import { createEmbed } from '../utils/createEmbed.js';
+import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -28,17 +20,16 @@ export default {
                 mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
             }
 
-            const embed = createEmbed('You are already registered your account.', embedColors.error);
+            const embed = errorEmbed({ message: 'You are already registered your account.' });
             return interaction.editReply({ embeds: [embed] });
         }
 
-        const registerEmbed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setTitle('HoYoVista Registration')
-            .setDescription(
+        const registerEmbed = primaryEmbed({
+            title: 'HoYoVista Registration',
+            message:
                 'By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) ' +
-                    'and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).'
-            );
+                'and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).',
+        });
 
         const continueButton = new ButtonBuilder()
             .setCustomId('register-disclaimer')
@@ -57,9 +48,7 @@ export default {
 
         if (button === 'disclaimer') {
             // Show the initial "registering" message
-            const initialEmbed = new EmbedBuilder()
-                .setColor(embedColors.warning)
-                .setDescription('Preparing your account, this will only take a moment...');
+            const initialEmbed = warningEmbed({ message: 'Preparing your account, this will only take a moment...' });
             await interaction.update({ embeds: [initialEmbed], components: [] });
 
             // Register the user
@@ -73,14 +62,12 @@ export default {
             ].join('\n');
 
             // Show the success message after updating
-            const successEmbed = new EmbedBuilder()
-                .setColor(embedColors.success)
-                .setTitle("You're all set~")
-                .setDescription(
-                    `Welcome to HoYoVista! Here are some commands you can use to get started:\n${commands}`
-                );
+            const registedEmbed = successEmbed({
+                title: "You're all set~",
+                message: `Welcome to HoYoVista! Here are some commands you can use to get started:\n${commands}`,
+            });
 
-            await interaction.editReply({ embeds: [successEmbed] });
+            await interaction.editReply({ embeds: [registedEmbed] });
         }
     },
 };

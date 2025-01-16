@@ -1,7 +1,6 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
-import { createEmbed } from '../utils/createEmbed.js';
-import { embedColors } from '../../config.js';
+import { errorEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -16,9 +15,9 @@ export default {
         const { retcode, data } = await mongo.getUserData(interaction.user.id);
 
         if (retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -29,7 +28,7 @@ export default {
         data.stats.command_used += 1;
         const formattedData = JSON.stringify(data, null, 2);
 
-        const embed = createEmbed(`\`\`\`json\n${formattedData}\n\`\`\``, embedColors.primary);
+        const embed = primaryEmbed({ message: `\`\`\`json\n${formattedData}\n\`\`\`` });
         await interaction.editReply({ embeds: [embed] });
     },
 };

@@ -1,15 +1,8 @@
-import {
-    SlashCommandBuilder,
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    MessageFlags,
-} from 'discord.js';
-import { embedColors } from '../../config.js';
-import fs from 'fs';
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { readFileSync } from 'node:fs';
+import { primaryEmbed } from '../utils/embedTemplates.js';
 
-const packageJson = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url)));
+const packageJson = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url)));
 
 export default {
     data: new SlashCommandBuilder()
@@ -18,13 +11,11 @@ export default {
         .setIntegrationTypes([0, 1])
         .setContexts([0, 1, 2]),
     async execute(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setTitle('About HoYoVista')
-            .setDescription(
-                'HoYoVista is a multipurpose Discord bot designed to enhance your gaming experience across various HoYoverse titles.'
-            )
-            .addFields(
+        const embed = primaryEmbed({
+            title: 'About HoYoVista',
+            message:
+                'HoYoVista is a multipurpose Discord bot designed to enhance your gaming experience across various HoYoverse titles.',
+            fields: [
                 {
                     name: 'Guild Count',
                     value: `${await interaction.client.shard.fetchClientValues('guilds.cache.size').then((results) => results.reduce((acc, guildCount) => acc + guildCount, 0))}`,
@@ -38,8 +29,9 @@ export default {
                     name: 'Uptime',
                     value: `<t:${Math.floor((Date.now() - interaction.client.uptime) / 1000)}:R>`,
                     inline: true,
-                }
-            );
+                },
+            ],
+        });
 
         const directory = new ButtonBuilder()
             .setLabel('Directory')

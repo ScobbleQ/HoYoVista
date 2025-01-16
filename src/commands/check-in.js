@@ -1,9 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { embedColors } from '../../config.js';
 import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { MongoDB } from '../class/mongo.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { performCheckin } from '../hoyolab/checkin.js';
+import { errorEmbed, warningEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -42,7 +41,7 @@ export default {
     async execute(interaction) {
         // fetch gameId and send initial feedback message
         const gameId = interaction.options.getString('account') || '0';
-        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
+        const fetchingEmbed = warningEmbed({ message: 'Retrieving your data. Please wait...' });
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -52,9 +51,9 @@ export default {
 
         // no account
         if (retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -65,18 +64,16 @@ export default {
 
         // error code OR no linked games
         if (gameId === '-1' || !user.linked_games) {
-            const embed = createEmbed('Link your hoyolab account to redeem codes.');
+            const embed = errorEmbed({ message: 'Link your hoyolab account to redeem codes.' });
             return interaction.editReply({ embeds: [embed] });
         }
 
         const gamesToCheckin = gameId === '0' ? Object.values(user.linked_games).map((game) => game.game_id) : [gameId];
         const userFetchTime = Date.now() - startUserFetchTime;
 
-        // send querying message (successful account retrieval)
-        const queryingEmbed = createEmbed(
-            `Account successfully retrieved in ${userFetchTime}ms.\nPerforming checkin...`,
-            embedColors.warning
-        );
+        const queryingEmbed = warningEmbed({
+            message: `Account successfully retrieved in ${userFetchTime}ms.\nPerforming checkin...`,
+        });
         await interaction.editReply({ embeds: [queryingEmbed] });
 
         const checkin = await performCheckin({

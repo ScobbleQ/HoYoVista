@@ -4,9 +4,9 @@ import { MongoDB } from '../class/mongo.js';
 import { Game } from '../hoyolab/constants.js';
 import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { fetchNotes } from '../hoyolab/fetchNotes.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { GameIconUrl } from '../hoyolab/routes.js';
 import { superstringDimensionTier } from '../hoyolab/gameConstants.js';
+import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 // TODO:
 // GENSHIN is COMPLETE (may add parametricT)
@@ -49,7 +49,7 @@ export default {
     async execute(interaction) {
         // fetch gameId and send initial feedback message
         const gameId = interaction.options.getString('account');
-        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
+        const fetchingEmbed = warningEmbed({ message: 'Retrieving your data. Please wait...' });
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -59,9 +59,9 @@ export default {
 
         // error code + no account
         if (gameId === '-1' && retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -72,7 +72,7 @@ export default {
 
         // error code + account
         if (gameId === '-1' && retcode === 1) {
-            const embed = createEmbed('None of your linked games are supported for this command.');
+            const embed = errorEmbed({ message: 'None of your linked games are supported for this command.' });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -86,10 +86,9 @@ export default {
         const userFetchTime = Date.now() - startUserFetchTime;
 
         // send querying message (successful account retrieval)
-        const queryingEmbed = createEmbed(
-            `Account successfully retrieved in ${userFetchTime}ms.\nFetching notes from HoYoverse...`,
-            embedColors.warning
-        );
+        const queryingEmbed = warningEmbed({
+            message: `Account successfully retrieved in ${userFetchTime}ms.\nFetching notes from HoYoverse...`,
+        });
         await interaction.editReply({ embeds: [queryingEmbed] });
 
         // fetch notes
@@ -101,17 +100,14 @@ export default {
 
         // notes failed
         if (noteData.retcode !== 1) {
-            const errorEmbed = createEmbed(noteData.message);
-            return interaction.editReply({ embeds: [errorEmbed] });
+            const errorEmbeds = errorEmbed({ message: noteData.message });
+            return interaction.editReply({ embeds: [errorEmbeds] });
         }
 
         // notes retrieved, prepare embeds to send
         const notes = noteData.data.data;
         const noteFetchTime = Date.now() - startNoteFetchTime;
-        const notesEmbed = createEmbed(
-            `Notes retrieved in ${noteFetchTime}ms.\nPreparing your data...`,
-            embedColors.warning
-        );
+        const notesEmbed = warningEmbed({ message: `Notes retrieved in ${noteFetchTime}ms.\nPreparing your data...` });
         await interaction.editReply({ embeds: [notesEmbed] });
 
         const embeds = [];
@@ -121,13 +117,11 @@ export default {
                 notes.resin_recovery_time === '0'
                     ? 'Fully Replenished'
                     : `Full <t:${Math.floor(Date.now() / 1000) + Number(notes.resin_recovery_time)}:R>`;
-            const base = new EmbedBuilder()
-                .setColor(embedColors.primary)
-                .setAuthor({
-                    name: `${nickname} (${game_role_id})`,
-                    iconURL: GameIconUrl[gameId],
-                })
-                .setDescription(`**Original Resin** ${resinLevel}\n${resinRestore}`);
+
+            const base = primaryEmbed({
+                author: { name: `${nickname} (${game_role_id})`, iconURL: GameIconUrl[gameId] },
+                message: `**Original Resin** ${resinLevel}\n${resinRestore}`,
+            });
 
             if (notes.max_home_coin !== '0') {
                 const realmMax =

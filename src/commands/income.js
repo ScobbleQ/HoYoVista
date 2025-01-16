@@ -1,11 +1,10 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { embedColors } from '../../config.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
 import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { fetchLedger } from '../hoyolab/fetchLedger.js';
 import { Game } from '../hoyolab/constants.js';
 import { zenlessRevenueStream } from '../hoyolab/gameConstants.js';
+import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 // TODO
 // add support for STARRAIL (retcode -100)
@@ -84,7 +83,8 @@ export default {
         // fetch gameId and send initial feedback message
         const gameId = interaction.options.getString('account');
         const month = interaction.options.getString('month');
-        const fetchingEmbed = createEmbed('Retrieving your data. Please wait...', embedColors.warning);
+
+        const fetchingEmbed = warningEmbed({ message: 'Retrieving your data. Please wait...' });
         await interaction.reply({ embeds: [fetchingEmbed] });
 
         // fetch user data from MongoDB
@@ -94,9 +94,9 @@ export default {
 
         // error code + no account
         if (gameId === '-1' && retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({
+                message: 'You are not registered. Please use the `/register` command to create an account.',
+            });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -107,7 +107,7 @@ export default {
 
         // error code + account
         if (gameId === '-1' && retcode === 1) {
-            const embed = createEmbed('None of your linked games are supported for this command.');
+            const embed = errorEmbed({ message: 'None of your linked games are supported for this command.' });
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -121,10 +121,9 @@ export default {
         const userFetchTime = Date.now() - startUserFetchTime;
 
         // send querying message (successful account retrieval)
-        const queryingEmbed = createEmbed(
-            `Account successfully retrieved in ${userFetchTime}ms.\nFetching ledger from HoYoverse...`,
-            embedColors.warning
-        );
+        const queryingEmbed = warningEmbed({
+            message: `Account successfully retrieved in ${userFetchTime}ms.\nFetching ledger from HoYoverse...`,
+        });
         await interaction.editReply({ embeds: [queryingEmbed] });
 
         // fetch notes
@@ -137,24 +136,21 @@ export default {
 
         // notes failed
         if (ledgerData.retcode !== 1) {
-            const errorEmbed = createEmbed(ledgerData.message);
-            return interaction.editReply({ embeds: [errorEmbed] });
+            const errorEmbeds = errorEmbed({ message: ledgerData.message });
+            return interaction.editReply({ embeds: [errorEmbeds] });
         }
 
         // notes retrieved, prepare embeds to send
         const ledger = ledgerData.data.data;
         const ledgerFetchTime = Date.now() - startLedgerFetchTime;
-        const ledgerEmbed = createEmbed(
-            `Ledger retrieved in ${ledgerFetchTime}ms.\nPreparing your data...`,
-            embedColors.warning
-        );
+        const ledgerEmbed = warningEmbed({
+            message: `Ledger retrieved in ${ledgerFetchTime}ms.\nPreparing your data...`,
+        });
         await interaction.editReply({ embeds: [ledgerEmbed] });
 
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setTitle(`Income Overview: ${getMonthName(month - 1)}`);
-
+        const embed = primaryEmbed({ title: `Income Overview: ${getMonthName(month - 1)}` });
         let summary;
+
         if (gameId === Game.GENSHIN) {
             const primogem = '<:UI_ItemIcon_201:1328873129560375377>';
             const mora = '<:UI_ItemIcon_202:1293962767388119111>';
@@ -188,7 +184,9 @@ export default {
                 percent: 0,
             }) || { action: 'unknown', num: 0, percent: 0 };
 
-            summary += `This month, your primary source for obtaining Primogems is through **${primarySource.action}**, for a total of **${primarySource.num}** Primogems, or **${primarySource.percent}%** of your total.`;
+            if (primarySource.action !== 'unknown') {
+                summary += `This month, your primary source for obtaining Primogems is through **${primarySource.action}**, for a total of **${primarySource.num}** Primogems, or **${primarySource.percent}%** of your total.`;
+            }
         } else if (gameId === Game.ZZZ) {
             const emojiMap = {
                 PolychromesData: '<:IconCurrency:1329116263137415198>',
@@ -222,7 +220,9 @@ export default {
                 percent: 0,
             }) || { action: 'unknown', num: 0, percent: 0 };
 
-            summary += `This month, your primary source for obtaining Polychromes is through **${zenlessRevenueStream[primarySource.action]}**, for a total of **${primarySource.num}** Polychromes, or **${primarySource.percent}%** of your total.`;
+            if (primarySource.action !== 'unknown') {
+                summary += `This month, your primary source for obtaining Polychromes is through **${zenlessRevenueStream[primarySource.action]}**, for a total of **${primarySource.num}** Polychromes, or **${primarySource.percent}%** of your total.`;
+            }
         }
 
         embed.setDescription(summary);

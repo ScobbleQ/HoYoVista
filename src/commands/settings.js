@@ -1,6 +1,5 @@
 import {
     SlashCommandBuilder,
-    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
@@ -10,9 +9,8 @@ import {
 } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
 import { IdToFull, IdToAbbr, IdToShort } from '../hoyolab/constants.js';
-import { createEmbed } from '../utils/createEmbed.js';
 import { Toggles } from '../utils/emojis.js';
-import { embedColors } from '../../config.js';
+import { errorEmbed, successEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 const Actions = {
     RESET: 'reset',
@@ -44,9 +42,7 @@ export default {
 
         // Check if the user is not registered
         if (retcode === -1) {
-            const embed = createEmbed(
-                'You are not registered. Please use the `/register` command to create an account.'
-            );
+            const embed = errorEmbed({ message: 'You are not registered. Please use the `/register` command.' });
             return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
@@ -121,11 +117,9 @@ export default {
             privacyBlur: Description.privacyBlur.replace('{status}', data.settings.is_private ? 'Enabled' : 'Disabled'),
         };
 
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setDescription(
-                `${descriptions.updateNotifications}\n\n${descriptions.analytics}\n\n${descriptions.privacyBlur}`
-            );
+        const embed = primaryEmbed({
+            message: `${descriptions.updateNotifications}\n\n${descriptions.analytics}\n\n${descriptions.privacyBlur}`,
+        });
 
         const buttonsConfig = [
             { id: 'subscribe', label: 'Toggle Updates', field: 'subscribed' },
@@ -168,27 +162,22 @@ export default {
                 .setEmoji(Toggles[game[`auto_${type}`]]);
         });
 
-        const embed = new EmbedBuilder().setColor(embedColors.primary).setDescription(description);
+        const embed = primaryEmbed({ message: description });
 
         const toggleRow = new ActionRowBuilder().addComponents(toggles);
         const menu = this.createPageMenu(page);
         return { embeds: [embed], components: [menu, toggleRow] };
     },
     renderResetSettings() {
-        const embed = createEmbed(
-            'Are you sure you want to reset your settings?\n\nThis action cannot be reversed.',
-            embedColors.warning
-        );
+        const embed = warningEmbed({
+            message: 'Are you sure you want to reset your settings?\n\nThis action cannot be reversed.',
+        });
 
         const confirmButton = new ButtonBuilder()
             .setCustomId('settings-reset-confirm')
             .setLabel('Confirm')
             .setStyle(ButtonStyle.Danger);
-        const cancelButton = new ButtonBuilder()
-            .setCustomId('settings-reset-cancel')
-            .setLabel('Cancel')
-            .setStyle(ButtonStyle.Secondary);
-        const actionRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+        const actionRow = new ActionRowBuilder().addComponents(confirmButton);
 
         return { embeds: [embed], components: [actionRow] };
     },
@@ -218,10 +207,8 @@ export default {
                     ].map((update) => mongo.set(id, update));
                     await Promise.all(defaultUpdates);
 
-                    const embed = createEmbed('Settings resetted to default values.', embedColors.success);
+                    const embed = successEmbed({ message: 'Settings successfully resetted to default values.' });
                     await interaction.update({ embeds: [embed], components: [] });
-                } else if (curValue === 'cancel') {
-                    await interaction.message.delete();
                 }
                 break;
             case Actions.SUBSCRIBE:

@@ -12,6 +12,7 @@ import {
     MessageFlags,
 } from 'discord.js';
 import { config, embedColors } from '../../config.js';
+import { successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -22,12 +23,11 @@ export default {
     async execute(interaction) {
         const dev = await interaction.client.users.fetch('755897312357777550');
 
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setAuthor({ name: dev.username, iconURL: dev.displayAvatarURL() })
-            .setDescription(
-                "Hello there! 🌟\n\nThank you for using the bot! Your feedback is important to us, whether it's a suggestion, a problem you've encountered, or just a thought you'd like to share.\n\nClick the button below to get started. We appreciate your input and will do our best to respond promptly!"
-            );
+        const embed = primaryEmbed({
+            author: { name: dev.username, iconURL: dev.displayAvatarURL() },
+            message:
+                "Hello there! 🌟\n\nThank you for using the bot! Your feedback is important to us, whether it's a suggestion, a problem you've encountered, or just a thought you'd like to share.\n\nClick the button below to get started. We appreciate your input and will do our best to respond promptly!",
+        });
 
         const feedbackButton = new ButtonBuilder()
             .setCustomId('feedback')
@@ -64,12 +64,19 @@ export default {
             token: config.webhookToken,
         });
 
-        const embed = new EmbedBuilder()
-            .setColor(embedColors.primary)
-            .setTitle('Feedback Modal Submission')
-            .setDescription(
-                `${codeBlock('yaml', 'Feedback Type')}\n${interaction.fields.getTextInputValue('feedback_type')}\n\n${codeBlock('yaml', 'Content')}\n${interaction.fields.getTextInputValue('feedback_text')}`
-            );
+        const embed = primaryEmbed({
+            title: 'Feedback Modal Submission',
+            fields: [
+                {
+                    name: 'Feedback Type',
+                    value: interaction.fields.getTextInputValue('feedback_type'),
+                },
+                {
+                    name: 'Content',
+                    value: interaction.fields.getTextInputValue('feedback_text'),
+                },
+            ],
+        });
 
         await webhookClient.send({
             content: '',
@@ -80,10 +87,7 @@ export default {
 
         await interaction.update({
             embeds: [
-                new EmbedBuilder()
-                    .setColor(embedColors.success)
-                    .setTitle('Feedback Submitted')
-                    .setDescription('Your feedback has been successfully submitted. Thank you for your input!'),
+                successEmbed({ message: 'Your feedback has been successfully submitted. Thank you for your input!' }),
             ],
             components: [],
         });
