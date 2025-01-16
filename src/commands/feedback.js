@@ -1,6 +1,5 @@
 import {
     SlashCommandBuilder,
-    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
@@ -8,10 +7,9 @@ import {
     TextInputBuilder,
     TextInputStyle,
     WebhookClient,
-    codeBlock,
     MessageFlags,
 } from 'discord.js';
-import { config, embedColors } from '../../config.js';
+import { config } from '../../config.js';
 import { successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
