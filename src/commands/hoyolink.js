@@ -28,7 +28,7 @@ export default {
 
         // Check if the user is not registered
         if (retcode === -1) {
-            const embed = new errorEmbed({
+            const embed = errorEmbed({
                 message: 'You are not registered. Please use the `/register` command to create an account.',
             });
             return interaction.editReply({ embeds: [embed] });
