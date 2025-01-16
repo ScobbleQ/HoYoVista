@@ -4,6 +4,7 @@ import { MongoDB } from '../class/mongo.js';
 import { Game } from '../hoyolab/constants.js';
 import { redeemCode } from '../hoyolab/redeem.js';
 import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -86,7 +87,15 @@ export default {
         });
         await interaction.editReply({ embeds: [queryingEmbed] });
 
-        const redeem = await redeemCode(interaction.user.id, {
+        let availableCodes;
+        try {
+            availableCodes = await fetchSeriaCodes();
+        } catch {
+            const embed = errorEmbed({ message: 'We are unable to get codes' });
+            return interaction.editReply({ embeds: [embed] });
+        }
+
+        const redeem = await redeemCode(interaction.user.id, availableCodes, {
             arrayOfGameId: gamesToRedeem,
             hoyolabCookies: user.hoyolab_cookies,
             linkedGames: user.linked_games,

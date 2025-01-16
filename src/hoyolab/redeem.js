@@ -8,11 +8,10 @@ import { embedColors } from '../../config.js';
 import { MongoDB } from '../class/mongo.js';
 
 export const redeemCode = async (
-    id,
+    id, availableCodes, 
     { arrayOfGameId, hoyolabCookies, linkedGames, isPrivate, toNotify, automatic }
 ) => {
     const mongo = MongoDB.getInstance();
-    const availableCodes = await fetchSeriaCodes();
     const cookies = { ...hoyolabCookies };
 
     let successfulRedeems = 0;

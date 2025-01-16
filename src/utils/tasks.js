@@ -2,6 +2,7 @@ import { MongoDB } from '../class/mongo.js';
 import { performCheckin } from '../hoyolab/checkin.js';
 import { redeemCode, cleanAttemptedCodes } from '../hoyolab/redeem.js';
 import logger from './logger.js';
+import { fetchSeriaCodes } from './fetchSeriaCodes.js';
 
 export const autoCheckin = async (client) => {
     // Random delay between 0 and 55 minutes
@@ -62,6 +63,13 @@ export const autoCheckin = async (client) => {
 };
 
 export const autoRedeem = async (client) => {
+    let availableCodes;
+    try {
+        availableCodes = await fetchSeriaCodes();
+    } catch {
+        // ignore, cant do anything without codes
+    }
+
     const query = {
         $or: [
             { 'linked_games.genshin.auto_redeem': true },
@@ -76,7 +84,7 @@ export const autoRedeem = async (client) => {
 
     users.map(async (user) => {
         try {
-            const redeem = await redeemCode(user.discord_id, {
+            const redeem = await redeemCode(user.discord_id, availableCodes, {
                 arrayOfGameId: Object.values(user.linked_games).map((game) => game.game_id),
                 hoyolabCookies: user.hoyolab_cookies,
                 linkedGames: user.linked_games,
