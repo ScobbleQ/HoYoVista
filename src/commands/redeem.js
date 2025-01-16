@@ -3,7 +3,7 @@ import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { MongoDB } from '../class/mongo.js';
 import { Game } from '../hoyolab/constants.js';
 import { redeemCode } from '../hoyolab/redeem.js';
-import { errorEmbed, warningEmbed } from '../utils/embedTemplates.js';
+import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -104,6 +104,10 @@ export default {
 
         if (redeem.embeds.length === 0) {
             const embed = errorEmbed({ message: 'No new codes found.' });
+            return interaction.editReply({ embeds: [embed] });
+        } else if (redeem.embeds.length > 10) {
+            // chunk embeds if more than 10?
+            const embed = primaryEmbed({ message: 'Too many codes to display. Check the codes using [/data]' });
             return interaction.editReply({ embeds: [embed] });
         }
 
