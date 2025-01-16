@@ -75,7 +75,6 @@ export const autoRedeem = async (client) => {
     const { data: users } = await mongo.find(query);
 
     users.map(async (user) => {
-        console.log('starting auto redeem for ' + user.discord_id);
         try {
             const redeem = await redeemCode(user.discord_id, {
                 arrayOfGameId: Object.values(user.linked_games).map((game) => game.game_id),
