@@ -36,7 +36,6 @@ export const performCheckin = async ({
         const { game_role_id, nickname, auto_checkin } = Object.values(linkedGames).find(
             (game) => game.game_id === gameId
         );
-        const uid = isPrivate ? censorUid(game_role_id) : game_role_id;
 
         // Skip if automatic check-in is disabled
         if (automatic && !auto_checkin) continue;
@@ -50,7 +49,7 @@ export const performCheckin = async ({
             embeds.push(
                 createEmbed({
                     nickname,
-                    uid,
+                    uid: censorUid({ uid: game_role_id, flag: isPrivate }),
                     gameId,
                     color: embedColors.error,
                     title: `[${data.retcode}] Daily Check-in Failed`,
@@ -76,7 +75,7 @@ export const performCheckin = async ({
 
         const embed = createEmbed({
             nickname,
-            uid,
+            uid: censorUid({ uid: game_role_id, flag: isPrivate }),
             gameId,
             color: embedColors.primary,
             title: 'Daily Check-in Claimed',
