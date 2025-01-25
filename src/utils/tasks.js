@@ -67,7 +67,10 @@ export const autoRedeem = async (client) => {
     try {
         availableCodes = await fetchSeriaCodes();
     } catch {
-        // ignore, cant do anything without codes
+        logger.error('Unable to fetch seria codes', { stack: error.stack });
+        availableCodes = null;
+    } finally {
+        if (!availableCodes) return;
     }
 
     const query = {

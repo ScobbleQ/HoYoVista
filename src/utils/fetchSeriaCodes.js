@@ -4,8 +4,8 @@ export const fetchSeriaCodes = async () => {
     const games = ['honkai3rd', 'genshin', 'hkrpg', 'nap'];
     const headers = { 'User-Agent': 'ScobbleQ' };
 
-    const requests = games.map((game) => {
-        const url = `http://hoyo-codes.seria.moe/codes?game=${game}`;
+    const requests = games.map(async (game) => {
+        const url = `https://hoyo-codes.seria.moe/codes?game=${game}`;
         return axios.get(url, { headers }).then(({ data }) => {
             const gameName = game === 'nap' ? 'zzz' : game;
             return {
