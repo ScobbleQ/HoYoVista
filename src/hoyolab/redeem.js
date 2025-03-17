@@ -8,7 +8,7 @@ import { embedColors } from '../../config.js';
 import { MongoDB } from '../class/mongo.js';
 
 export const redeemCode = async (
-    id, availableCodes, 
+    id, availableCodes,
     { arrayOfGameId, hoyolabCookies, linkedGames, isPrivate, toNotify, automatic }
 ) => {
     const mongo = MongoDB.getInstance();
@@ -36,78 +36,57 @@ export const redeemCode = async (
             const unredeemedCodes =
                 availableCodes[gameKey]?.filter((code) => !attempted_codes.includes(code.code)) || [];
 
-            // might need to swap to for...of loop to ensure sequential redemption with delay
-            await Promise.all(
-                unredeemedCodes.map(async (code) => {
-                    // special handling for honkai
-                    if (gameId === Game.HONKAI) {
-                        if (!automatic || (automatic && toNotify)) {
-                            embeds.push(
-                                new EmbedBuilder()
-                                    .setColor(embedColors.primary)
-                                    .setTitle('New Code Available')
-                                    .setDescription(`Code: ${code.code}\nReward: ${code.reward}`)
-                                    .setFooter({ text: 'Please redeem manually in-game.' })
-                            );
-                        }
-
-                        attemptedCodes.push(code.code);
-                        mongo.push(id, {
-                            field: `linked_games.${gameKey}.attempted_codes`,
-                            value: code.code,
-                        });
-
-                        return;
-                    }
-
-                    const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
-
-                    if (data.retcode === 0) {
-                        // not automatic, notify user of successful redemption
-                        // automatic, notify user if toNotify is true
-                        if (!automatic || (automatic && toNotify)) {
-                            embeds.push(
-                                new EmbedBuilder()
-                                    .setColor(embedColors.primary)
-                                    .setAuthor({
-                                        name: `${nickname} (${uid})`,
-                                        iconURL: GameIconUrl[gameId],
-                                    })
-                                    .setTitle('Code Redeemed')
-                                    .setDescription(`Code: ${code.code}\nReward: ${code.reward}`)
-                            );
-                        }
-
-                        successfulRedeems++;
-                    } else if (data.retcode === -1075) {
-                        // no character on server, disable auto redeem
-                        await mongo.set(id, {
-                            field: `linked_games.${gameKey}.auto_redeem`,
-                            value: false,
-                        });
-                    } else {
-                        // not automatic, notify user of failed redemption
-                        // MIGHT BE REMOVED IN THE FUTURE
-                        if (!automatic) {
-                            embeds.push(
-                                new EmbedBuilder()
-                                    .setColor(embedColors.error)
-                                    .setTitle(`[${data.retcode}] ${code.code}`)
-                                    .setDescription(data.message)
-                            );
-                        }
-                    }
-
+            for (const code of unredeemedCodes) {
+                if (gameId === Game.HONKAI) {
                     attemptedCodes.push(code.code);
                     mongo.push(id, {
                         field: `linked_games.${gameKey}.attempted_codes`,
                         value: code.code,
                     });
+                    continue;
+                }
 
-                    // sleep for 5 seconds to prevent rate limiting
-                    await new Promise((resolve) => setTimeout(resolve, 5005));
-                })
-            );
+                const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
+
+                if (data.retcode === 0) {
+                    if (!automatic || (automatic && toNotify)) {
+                        embeds.push(
+                            new EmbedBuilder()
+                                .setColor(embedColors.primary)
+                                .setAuthor({
+                                    name: `${nickname} (${uid})`,
+                                    iconURL: GameIconUrl[gameId],
+                                })
+                                .setTitle('Code Redeemed')
+                                .setDescription(`Code: ${code.code}${code.reeward ? `\nReward: ${code.reward}` : ''}`),
+                        );
+                    }
+
+                    successfulRedeems++;
+                } else if (data.retcode === -1075) {
+                    await mongo.set(id, {
+                        field: `linked_games.${gameKey}.auto_redeem`,
+                        value: false,
+                    });
+                } else {
+                    if (!automatic) {
+                        embeds.push(
+                            new EmbedBuilder()
+                                .setColor(embedColors.error)
+                                .setTitle(`[${data.retcode}] ${code.code}`)
+                                .setDescription(data.message)
+                        );
+                    }
+                }
+
+                attemptedCodes.push(code.code);
+                mongo.push(id, {
+                    field: `linked_games.${gameKey}.attempted_codes`,
+                    value: code.code,
+                });
+
+                await new Promise((resolve) => setTimeout(resolve, 5005));
+            }
         })
     );
 
