@@ -5,6 +5,7 @@ import { fetchLedger } from '../hoyolab/fetchLedger.js';
 import { Game } from '../hoyolab/constants.js';
 import { zenlessRevenueStream } from '../hoyolab/gameConstants.js';
 import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 // TODO
 // add support for STARRAIL (retcode -100)
@@ -102,7 +103,15 @@ export default {
 
         // increment command usage count
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'income',
+                    gameId: gameId,
+                    month: month,
+                },
+            });
         }
 
         // error code + account

@@ -6,7 +6,8 @@ export const fetchSeriaCodes = async () => {
 
     const requests = games.map(async (game) => {
         const url = `https://hoyo-codes.seria.moe/codes?game=${game}`;
-        return axios.get(url, { headers }).then(({ data }) => {
+
+        return await axios.get(url, { headers }).then(({ data }) => {
             const gameName = game === 'nap' ? 'zzz' : game;
             return {
                 [gameName]: data.codes.map((code) => ({
@@ -19,5 +20,5 @@ export const fetchSeriaCodes = async () => {
     });
 
     const results = await Promise.all(requests);
-    return Object.assign({}, ...results);
+    return await Object.assign({}, ...results);
 };

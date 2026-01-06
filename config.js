@@ -8,6 +8,7 @@ export const config = {
     mongoUri: process.env.MONGO_URI || '',
     webhookId: process.env.WEBHOOK_ID || '',
     webhookToken: process.env.WEBHOOK_TOKEN || '',
+    databaseUrl: process.env.DATABASE_URL || '',
 };
 
 export const discordPresence = [

@@ -24,6 +24,7 @@ export const autoCheckin = async (client) => {
     users.map(async (user) => {
         try {
             const checkin = await performCheckin({
+                discordId: user.discord_id,
                 arrayOfGameId: Object.values(user.linked_games).map((game) => game.game_id),
                 linkedGames: user.linked_games,
                 hoyolabCookies: user.hoyolab_cookies,

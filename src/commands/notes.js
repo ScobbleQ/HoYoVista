@@ -7,6 +7,7 @@ import { fetchNotes } from '../hoyolab/fetchNotes.js';
 import { GameIconUrl } from '../hoyolab/routes.js';
 import { superstringDimensionTier } from '../hoyolab/gameConstants.js';
 import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 // TODO:
 // GENSHIN is COMPLETE (may add parametricT)
@@ -67,7 +68,14 @@ export default {
 
         // increment command usage count
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'notes',
+                    gameId: gameId,
+                },
+            });
         }
 
         // error code + account

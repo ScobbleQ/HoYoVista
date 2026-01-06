@@ -3,6 +3,7 @@ import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { MongoDB } from '../class/mongo.js';
 import { performCheckin } from '../hoyolab/checkin.js';
 import { errorEmbed, warningEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -59,7 +60,14 @@ export default {
 
         // increment command usage count, account confirmed
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'check-in',
+                    gameId: gameId,
+                },
+            });
         }
 
         // error code OR no linked games
@@ -77,6 +85,7 @@ export default {
         await interaction.editReply({ embeds: [queryingEmbed] });
 
         const checkin = await performCheckin({
+            discordId: interaction.user.id,
             arrayOfGameId: gamesToCheckin,
             linkedGames: user.linked_games,
             hoyolabCookies: user.hoyolab_cookies,

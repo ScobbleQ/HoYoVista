@@ -1,10 +1,18 @@
-import { SlashCommandBuilder } from 'discord.js';
+import {
+    SlashCommandBuilder,
+    ContainerBuilder,
+    MediaGalleryBuilder,
+    MessageFlags,
+    TextDisplayBuilder,
+    SectionBuilder,
+} from 'discord.js';
 import { fetchLinkedAccount } from '../hoyolab/fetchLinkedAccount.js';
 import { MongoDB } from '../class/mongo.js';
 import { fetchGameIndex } from '../hoyolab/fetchGameIndex.js';
-import { prettyStats } from '../utils/pretty.js';
 import { Game } from '../hoyolab/constants.js';
-import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { errorEmbed } from '../utils/embedTemplates.js';
+import { StygianDifficulty } from '../utils/emojis.js';
+import { addEvent } from '../db/queries.js';
 
 // TODO:
 // display personalized stats
@@ -49,8 +57,10 @@ export default {
     async execute(interaction) {
         // fetch gameId and send initial feedback message
         const gameId = interaction.options.getString('account');
-        const fetchingEmbed = warningEmbed({ message: 'Retrieving your data. Please wait...' });
-        await interaction.reply({ embeds: [fetchingEmbed] });
+        const fetchingContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(`Retrieving your data. Please wait...`)
+        );
+        await interaction.reply({ components: [fetchingContainer], flags: MessageFlags.IsComponentsV2 });
 
         // fetch user data from MongoDB
         const startUserFetchTime = Date.now();
@@ -67,7 +77,14 @@ export default {
 
         // increment command usage count
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'profile',
+                    gameId: gameId,
+                },
+            });
         }
 
         // error code + account
@@ -80,16 +97,17 @@ export default {
         const linkedGames = user.linked_games;
         const gameKey = Object.keys(linkedGames).find((key) => linkedGames[key].game_id.toString() === gameId);
 
-        // get user cookies and game info, stop user timer
         const { ltmid_v2, ltoken_v2, ltuid_v2, mi18nLang } = user.hoyolab_cookies;
-        const { game_id, game_role_id, nickname, region } = linkedGames[gameKey];
+        const { game_id, game_role_id, region, region_name } = linkedGames[gameKey];
         const userFetchTime = Date.now() - startUserFetchTime;
 
         // send querying message (successful account retrieval)
-        const queryingEmbed = warningEmbed({
-            message: `Account successfully retrieved in ${userFetchTime}ms.\nFetching profile from HoYoverse...`,
-        });
-        await interaction.editReply({ embeds: [queryingEmbed] });
+        const queryingContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+                `Account successfully retrieved in ${userFetchTime}ms.\nFetching profile from HoYoverse...`
+            )
+        );
+        await interaction.editReply({ components: [queryingContainer], flags: MessageFlags.IsComponentsV2 });
 
         // fetch game index
         const indexStartTime = Date.now();
@@ -107,26 +125,112 @@ export default {
         // stats retrieved
         const gameIndexData = gameIndex.data.data;
         const indexFetchTime = Date.now() - indexStartTime;
-        const indexEmbed = warningEmbed({
-            message: `Profile retrieved in ${indexFetchTime}ms.\nPreparing your data...`,
+        const preparingContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(`Profile retrieved in ${indexFetchTime}ms.\nPreparing your data...`)
+        );
+        await interaction.editReply({ components: [preparingContainer], flags: MessageFlags.IsComponentsV2 });
+
+        let enkaData = null;
+        const container = new ContainerBuilder().setAccentColor();
+
+        if (gameId === Game.GENSHIN) {
+            const res = await fetch(`https://enka.network/api/uid/${game_role_id}`, {
+                headers: {
+                    'User-Agent': 'ScobbleQ - TESTING',
+                },
+            });
+
+            enkaData = await res.json();
+            const { playerInfo } = enkaData;
+            const { role, stats } = gameIndexData;
+
+            const namecardRes = await fetch(
+                `https://raw.githubusercontent.com/EnkaNetwork/API-docs/refs/heads/master/store/gi/namecards.json`
+            );
+            const namecards = await namecardRes.json();
+            const namecardUrl = `https://enka.network/${namecards[playerInfo.nameCardId].Icon}`;
+
+            const banner = new MediaGalleryBuilder().addItems((mediaGalleryItem) =>
+                mediaGalleryItem.setURL(namecardUrl)
+            );
+
+            container.addMediaGalleryComponents(banner);
+
+            const info = new SectionBuilder()
+                .addTextDisplayComponents((textDisplay) =>
+                    textDisplay.setContent(
+                        [
+                            `# ${role.nickname}`,
+                            `-# AR ${role.level} | ${region_name} | ${game_role_id}`,
+                            `${playerInfo.signature}`,
+                        ].join('\n')
+                    )
+                )
+                .setThumbnailAccessory((thumbnail) => thumbnail.setURL(role.game_head_icon));
+
+            container.addSectionComponents(info);
+
+            container.addSeparatorComponents((separator) => separator);
+
+            const statDisplay = new TextDisplayBuilder().setContent(
+                [
+                    `Total Achievements: ${stats.achievement_number || '0'}`,
+                    `Max Friendships: ${stats.full_fetter_avatar_num || '0'}`,
+                    `Spiral Abyss: ${playerInfo.towerFloorIndex ? `${playerInfo.towerFloorIndex}-${playerInfo.towerLevelIndex}${playerInfo.towerStarIndex ? ` | ${playerInfo.towerStarIndex}` : ''}` : 'Not yet attempted'}`,
+                    `Imaginarium Theater: ${playerInfo.theaterActIndex ? `Act ${playerInfo.theaterActIndex} | ${playerInfo.theaterStarIndex}` : 'Not yet attempted'}`,
+                    `Stygian Onslaught: ${playerInfo.stygianIndex ? `${StygianDifficulty[playerInfo.stygianIndex]} ${playerInfo.stygianSeconds}s` : 'Not yet attempted'}`,
+                ].join('\n')
+            );
+
+            container.addTextDisplayComponents(statDisplay);
+        } else if (gameId === Game.ZZZ) {
+            const res = await fetch(`https://enka.network/api/zzz/uid/${game_role_id}`, {
+                headers: {
+                    'User-Agent': 'ScobbleQ - TESTING',
+                },
+            });
+
+            enkaData = (await res.json()).PlayerInfo;
+            const { SocialDetail } = enkaData;
+
+            const banner = new MediaGalleryBuilder().addItems((mediaGalleryItem) =>
+                mediaGalleryItem.setURL(gameIndexData.game_data_show.card_url)
+            );
+
+            container.addMediaGalleryComponents(banner);
+
+            const info = new SectionBuilder()
+                .addTextDisplayComponents((textDisplay) =>
+                    textDisplay.setContent(
+                        [
+                            `# ${SocialDetail.ProfileDetail.Nickname}`,
+                            `-# Lv.${SocialDetail.ProfileDetail.Level} | ${region_name} | ${game_role_id}`,
+                            `${SocialDetail.Desc}`,
+                        ].join('\n')
+                    )
+                )
+                .setThumbnailAccessory((thumbnail) => thumbnail.setURL(gameIndexData.cur_head_icon_url));
+
+            container.addSectionComponents(info);
+
+            container.addSeparatorComponents((separator) => separator);
+
+            const statDisplay = new TextDisplayBuilder().setContent(
+                [
+                    `${gameIndexData.game_data_show.personal_title}`,
+                    `Active Days: ${gameIndexData.stats.active_days}`,
+                    `Achievements: ${gameIndexData.stats.achievement_count}`,
+                    `Simulated Battle Trial: ${gameIndexData.stats.climbing_tower_layer}`,
+                    `Battle Trial: The Last Stand: ${gameIndexData.stats.climbing_tower_s2.climbing_tower_layer}`,
+                ].join('\n')
+            );
+
+            container.addTextDisplayComponents(statDisplay);
+        }
+
+        await interaction.editReply({
+            components: [container],
+            flags: MessageFlags.IsComponentsV2,
         });
-        await interaction.editReply({ embeds: [indexEmbed] });
-
-        // get stat overview
-        const gameStats = gameIndexData.stats;
-        const statDescription = Object.entries(gameStats)
-            .filter(([_, value]) => typeof value === 'number' || typeof value === 'string')
-            .map(([key, value]) => `${prettyStats[key] || key}: ${value}`)
-            .join('\n');
-
-        // create embed
-        const embed = primaryEmbed({
-            title: `${nickname} (${game_role_id})`,
-            author: { name: `${nickname} (${game_role_id})` },
-            description: statDescription,
-            thumbnail: gameIndexData?.role?.game_head_icon || gameIndexData?.cur_head_icon_url,
-        });
-
-        await interaction.editReply({ embeds: [embed] });
     },
 };

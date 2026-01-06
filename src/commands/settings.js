@@ -11,6 +11,7 @@ import { MongoDB } from '../class/mongo.js';
 import { IdToFull, IdToAbbr, IdToShort } from '../hoyolab/constants.js';
 import { Toggles } from '../utils/emojis.js';
 import { errorEmbed, successEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 const Actions = {
     RESET: 'reset',
@@ -48,7 +49,13 @@ export default {
 
         // increment on first usage
         if (data.settings.collect_data && update === false) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'settings',
+                },
+            });
         }
 
         if (!data.linked_games) {

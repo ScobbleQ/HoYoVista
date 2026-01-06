@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
 import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -17,7 +18,13 @@ export default {
         // Already registered
         if (user.retcode === 1) {
             if (user.data.settings.collect_data) {
-                mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+                await addEvent(interaction.user.id, {
+                    game: 'discord',
+                    type: 'interaction',
+                    metadata: {
+                        command: 'register',
+                    },
+                });
             }
 
             const embed = errorEmbed({ message: 'You are already registered your account.' });

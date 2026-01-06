@@ -5,6 +5,7 @@ import { Game } from '../hoyolab/constants.js';
 import { redeemCode } from '../hoyolab/redeem.js';
 import { errorEmbed, warningEmbed, primaryEmbed } from '../utils/embedTemplates.js';
 import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
+import { addEvent } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -69,7 +70,15 @@ export default {
 
         // increment command usage count, account confirmed
         if (user.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'redeem',
+                    gameId: gameId,
+                    codes: codes,
+                },
+            });
         }
 
         // error code OR no linked games

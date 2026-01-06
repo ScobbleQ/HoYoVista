@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { WEB_HEADER, CHECKIN_URL, CHECKIN_DETAILS_URL, GameIconUrl } from './routes.js';
-import { Game } from './constants.js';
+import { Game, IdToAbbr } from './constants.js';
 import { censorUid } from '../utils/privacy.js';
 import { EmbedBuilder } from 'discord.js';
 import { embedColors } from '../../config.js';
+import { addEvent } from '../db/queries.js';
 
 const createEmbed = ({ nickname, uid, gameId, color, title, description, thumbnail, footer }) => {
     const embed = new EmbedBuilder()
@@ -19,6 +20,7 @@ const createEmbed = ({ nickname, uid, gameId, color, title, description, thumbna
 };
 
 export const performCheckin = async ({
+    discordId,
     arrayOfGameId,
     linkedGames,
     hoyolabCookies,
@@ -61,9 +63,6 @@ export const performCheckin = async ({
 
         successfulCheckin++;
 
-        // Skip if user has disabled check-in notifications (automatic only)
-        if (automatic && !to_notify_checkin) continue;
-
         const [infoData, homeData] = await Promise.all([
             fetchCheckinInfo(gameId, cookies),
             fetchCheckinHome(gameId, cookies),
@@ -72,6 +71,19 @@ export const performCheckin = async ({
         const today = Number(infoData.data.today.split('-')[2]);
         const missedDays = today - infoData.data.total_sign_day;
         const award = homeData.data.awards[today - 1];
+
+        // Add event to the database
+        await addEvent(discordId, {
+            game: gameId,
+            type: 'checkin',
+            metadata: {
+                reward: award.name,
+                amount: award.cnt,
+            },
+        });
+
+        // Skip if user has disabled check-in notifications (automatic only)
+        if (automatic && !to_notify_checkin) continue;
 
         const embed = createEmbed({
             nickname,

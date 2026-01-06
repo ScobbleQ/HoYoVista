@@ -1,6 +1,6 @@
 {
     "name": "hoyovista",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "description": "Empower your HoYoverse experience with this HoYoLAB Bot! Access all the HoYoLAB features right from Discord, including daily check-ins, auto code redemptions, and more!",
     "main": "index.js",
     "type": "module",
@@ -20,13 +20,16 @@
     "dependencies": {
         "axios": "^1.7.7",
         "cron": "^3.1.7",
-        "discord.js": "^14.16.1",
-        "dotenv": "^16.4.5",
+        "discord.js": "^14.25.1",
+        "dotenv": "^17.2.3",
+        "drizzle-orm": "^0.45.1",
         "mongodb": "^6.8.1",
+        "postgres": "^3.4.7",
         "winston": "^3.17.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.17.0",
+        "drizzle-kit": "^0.31.8",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.2.1",

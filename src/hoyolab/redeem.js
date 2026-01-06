@@ -8,7 +8,8 @@ import { embedColors } from '../../config.js';
 import { MongoDB } from '../class/mongo.js';
 
 export const redeemCode = async (
-    id, availableCodes,
+    id,
+    availableCodes,
     { arrayOfGameId, hoyolabCookies, linkedGames, isPrivate, toNotify, automatic }
 ) => {
     const mongo = MongoDB.getInstance();
@@ -49,6 +50,12 @@ export const redeemCode = async (
                 const { data } = await postRedeem(gameId, uid, region, code.code, cookies);
 
                 if (data.retcode === 0) {
+                    // Add event to the database
+                    await addEvent(id, {
+                        game: gameId,
+                        type: 'redeem',
+                    });
+
                     if (!automatic || (automatic && toNotify)) {
                         embeds.push(
                             new EmbedBuilder()
@@ -58,7 +65,7 @@ export const redeemCode = async (
                                     iconURL: GameIconUrl[gameId],
                                 })
                                 .setTitle('Code Redeemed')
-                                .setDescription(`Code: ${code.code}${code.reeward ? `\nReward: ${code.reward}` : ''}`),
+                                .setDescription(`Code: ${code.code}${code.reeward ? `\nReward: ${code.reward}` : ''}`)
                         );
                     }
 

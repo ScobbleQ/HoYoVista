@@ -13,6 +13,7 @@ import { parseCookies } from '../utils/parseCookies.js';
 import { fetchGameRecord } from '../hoyolab/fetchGameRecord.js';
 import { IdToAbbr } from '../hoyolab/constants.js';
 import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -35,7 +36,13 @@ export default {
         }
 
         if (data.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'hoyolink',
+                },
+            });
         }
 
         // Check if the user has already linked their HoYoLAB account

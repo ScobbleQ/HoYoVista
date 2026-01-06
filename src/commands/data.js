@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
 import { errorEmbed, primaryEmbed } from '../utils/embedTemplates.js';
+import { addEvent } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -22,10 +23,15 @@ export default {
         }
 
         if (data.settings.collect_data) {
-            mongo.increment(interaction.user.id, { field: 'stats.command_used', value: 1 });
+            await addEvent(interaction.user.id, {
+                game: 'discord',
+                type: 'interaction',
+                metadata: {
+                    command: 'data',
+                },
+            });
         }
 
-        data.stats.command_used += 1;
         const formattedData = JSON.stringify(data, null, 2);
 
         const embed = primaryEmbed({ message: `\`\`\`json\n${formattedData}\n\`\`\`` });
