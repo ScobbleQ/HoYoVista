@@ -24,6 +24,17 @@ export async function getUser(uid) {
 /**
  *
  * @param {string} uid - The user's Discord ID
+ */
+export async function addUser(uid) {
+    await db.insert(users).values({
+        uid,
+        // Default values
+    });
+}
+
+/**
+ *
+ * @param {string} uid - The user's Discord ID
  * @param {string} game - The game name [genshin, honkai, etc.]
  * @param {string} type - The event type [checkin, redeem]
  * @param {object} metadata - The event metadata

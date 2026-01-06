@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { MongoDB } from '../class/mongo.js';
 import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
-import { addEvent } from '../db/queries.js';
+import { addEvent, addUser } from '../db/queries.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -60,6 +60,7 @@ export default {
 
             // Register the user
             await mongo.initUser(interaction.user.id);
+            await addUser(interaction.user.id);
 
             // List of commands to show after registration
             const commands = [
