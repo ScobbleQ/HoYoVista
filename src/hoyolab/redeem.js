@@ -57,7 +57,7 @@ export const redeemCode = async (
                         type: 'redeem',
                         metadata: {
                             code: code.code,
-                            reward: code.reward
+                            reward: code.reward,
                         }
                     });
 
