@@ -6,6 +6,7 @@ import { Game, IdToAbbr } from './constants.js';
 import { EmbedBuilder } from 'discord.js';
 import { embedColors } from '../../config.js';
 import { MongoDB } from '../class/mongo.js';
+import { addEvent } from '../db/queries.js';
 
 export const redeemCode = async (
     id,
@@ -54,6 +55,10 @@ export const redeemCode = async (
                     await addEvent(id, {
                         game: gameId,
                         type: 'redeem',
+                        metadata: {
+                            code: code.code,
+                            reward: code.reward
+                        }
                     });
 
                     if (!automatic || (automatic && toNotify)) {
@@ -65,7 +70,7 @@ export const redeemCode = async (
                                     iconURL: GameIconUrl[gameId],
                                 })
                                 .setTitle('Code Redeemed')
-                                .setDescription(`Code: ${code.code}${code.reeward ? `\nReward: ${code.reward}` : ''}`)
+                                .setDescription(`Code: ${code.code}${code.reward ? `\nReward: ${code.reward}` : ''}`)
                         );
                     }
 
