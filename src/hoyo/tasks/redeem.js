@@ -30,9 +30,6 @@ export async function autoRedeem(client) {
 
   const task = users.map((u) =>
     limit(async () => {
-      // Temp debug only for testing
-      if (u.uid !== '399617261230358530') return;
-
       try {
         const [cookies, linkedGames] = await Promise.all([
           getCookies(u.uid),
