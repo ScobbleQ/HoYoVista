@@ -1,0 +1,187 @@
+import { ContainerBuilder, MessageFlags } from 'discord.js';
+import pLimit from 'p-limit';
+import {
+  addAttemptedCode,
+  addEvent,
+  getCookies,
+  getUserLinkedGames,
+  getUsersWithAutoRedeem,
+} from '../../db/queries.js';
+import { IdToAbbr, IdToFull } from '../../hoyo/utils/constants.js';
+import logger from '../../utils/logger.js';
+import { censorUid } from '../../utils/privacy.js';
+import { redeemCode } from '../api/redeem.js';
+import { cleanAttemptedCodes } from '../utils/cleanAttemptedCodes.js';
+import { Games } from '../utils/constants.js';
+import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
+
+/** @typedef {import("../../utils/typedef.js").GameID} GameID */
+
+/**
+ *
+ * @param {import("discord.js").Client} client
+ */
+export async function autoRedeem(client) {
+  const availableCodes = await fetchSeriaCodes();
+  if (!availableCodes) return;
+
+  const users = await getUsersWithAutoRedeem();
+  const limit = pLimit(10);
+
+  const task = users.map((u) =>
+    limit(async () => {
+      // Temp debug only for testing
+      if (u.uid !== '399617261230358530') return;
+
+      try {
+        const [cookies, linkedGames] = await Promise.all([
+          getCookies(u.uid),
+          getUserLinkedGames(u.uid),
+        ]);
+
+        // If no cookies or linked games, skip
+        if (!cookies || linkedGames.length === 0) return;
+
+        let didAttemptRedeem = false;
+        let hasAddedSection = false;
+
+        const redeemContainer = new ContainerBuilder()
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              `## Code Redemption Summary\n-# <t:${Math.floor(Date.now() / 1000)}:F>`
+            )
+          )
+          .addSeparatorComponents((separator) => separator);
+
+        // Loop through all linked games
+        for (let i = 0; i < linkedGames.length; i++) {
+          const game = linkedGames[i];
+
+          // Automatic redeem is disabled, skip
+          if (!game.autoRedeem) continue;
+
+          // Get redeemed codes for this game
+          const redeemedCodes = game.attemptedCodes;
+
+          // Get unredeemed codes for this game
+          const unredeemedCodes =
+            availableCodes[IdToAbbr[game.gameId]]?.filter(
+              (code) => !redeemedCodes.includes(code.code)
+            ) || [];
+
+          // If no unredeemed codes, skip
+          if (unredeemedCodes.length === 0) continue;
+          didAttemptRedeem = true;
+
+          // Separator only before 2nd, 3rd, … section (so we never add a trailing one)
+          if (hasAddedSection) {
+            redeemContainer.addSeparatorComponents((separator) => separator);
+          }
+
+          // Loop through all unredeemed codes
+          let gameSectionText = `**${IdToFull[game.gameId]}** (${censorUid({ uid: game.gameRoleId, flag: u.private })})\n`;
+
+          // Special case for Honkai Impact 3rd
+          if (game.gameId === Games.HONKAI) {
+            gameSectionText += '-# Please redeem these codes manually in-game:\n';
+            gameSectionText += unredeemedCodes
+              .map((c) =>
+                `- Code: \`${c.code}\`${c.rewards ? `\n> Reward: ${c.rewards}` : ''}`.trim()
+              )
+              .join('\n');
+
+            redeemContainer.addTextDisplayComponents((textDisplay) =>
+              textDisplay.setContent(gameSectionText)
+            );
+            hasAddedSection = true;
+
+            for (const codes of unredeemedCodes) {
+              // Add the code to the attempted codes list
+              await addAttemptedCode(u.uid, game.gameId, codes.code);
+            }
+
+            continue;
+          }
+
+          for (let j = 0; j < unredeemedCodes.length; j++) {
+            const code = unredeemedCodes[j];
+
+            // Add the code to the attempted codes list
+            await addAttemptedCode(u.uid, game.gameId, code.code);
+
+            // Redeem the code
+            const redeem = await redeemCode(game.gameRoleId, {
+              gameId: /** @type {GameID} */ (game.gameId),
+              region: game.region,
+              code: code.code,
+              cookies: cookies,
+            });
+
+            if (!redeem || !redeem.data) {
+              if (u.collectData) {
+                await addEvent(u.uid, {
+                  game: game.gameId,
+                  type: 'redeem',
+                  metadata: {
+                    code: code.code,
+                    reward: null,
+                  },
+                });
+              }
+            }
+
+            // Code redemption failed, skip
+            if (!redeem) {
+              gameSectionText += `- Code \`${code.code}\`\n> [-999] Internal server error\n`;
+              continue;
+            }
+
+            // No data returned, probably an error
+            if (!redeem.data) {
+              gameSectionText += `- Code: \`${code.code}\`\n> [${redeem.retcode}] ${redeem.message}\n`;
+              continue;
+            }
+
+            // Data returned, add the code to the text display
+            gameSectionText +=
+              `- Code: \`${code.code}\`${code.rewards ? `\n> Reward: ${code.rewards}` : ''}`.trim() +
+              '\n\n';
+
+            // Add event to the database
+            if (u.collectData) {
+              await addEvent(u.uid, {
+                game: game.gameId,
+                type: 'redeem',
+                metadata: {
+                  code: code.code,
+                  reward: code.rewards,
+                },
+              });
+            }
+
+            // Add a 5.5 second delay between code redemptions to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 5500));
+          }
+
+          redeemContainer.addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(gameSectionText)
+          );
+          hasAddedSection = true;
+        }
+
+        if (didAttemptRedeem && u.notifyRedeem) {
+          await client.users.send(u.uid, {
+            components: [redeemContainer],
+            flags: MessageFlags.IsComponentsV2,
+          });
+        }
+      } catch (/** @type {any} */ error) {
+        logger.error(`Auto Redeem: Failed for user ${u.uid}`, { stack: error.stack });
+      } finally {
+        await cleanAttemptedCodes(u.uid, availableCodes);
+      }
+    })
+  );
+
+  await Promise.allSettled(task);
+}

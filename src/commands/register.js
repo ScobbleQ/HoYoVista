@@ -1,81 +1,122 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
-import { MongoDB } from '../class/mongo.js';
-import { errorEmbed, warningEmbed, successEmbed, primaryEmbed } from '../utils/embedTemplates.js';
-import { addEvent, addUser } from '../db/queries.js';
+import {
+  ButtonBuilder,
+  ButtonStyle,
+  ContainerBuilder,
+  MessageFlags,
+  SlashCommandBuilder,
+  TextDisplayBuilder,
+} from 'discord.js';
+import { addEvent, addUser, getUser } from '../db/queries.js';
 
 export default {
-    data: new SlashCommandBuilder()
-        .setName('register')
-        .setDescription('Register your account to HoYoVista.')
-        .setIntegrationTypes([0, 1])
-        .setContexts([0, 1, 2]),
-    async execute(interaction) {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  cooldown: 10,
+  data: new SlashCommandBuilder()
+    .setName('register')
+    .setDescription('Register your account to HoYoVista.')
+    .setIntegrationTypes([0, 1])
+    .setContexts([0, 1, 2]),
+  /**
+   * @param {import("discord.js").ChatInputCommandInteraction} interaction
+   * @returns {Promise<void>}
+   */
+  async execute(interaction) {
+    // Defer the reply to show the loading state
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
-        const mongo = MongoDB.getInstance();
-        const user = await mongo.getUserData(interaction.user.id);
-
-        // Already registered
-        if (user.retcode === 1) {
-            if (user.data.settings.collect_data) {
-                await addEvent(interaction.user.id, {
-                    game: 'discord',
-                    type: 'interaction',
-                    metadata: {
-                        command: 'register',
-                    },
-                });
-            }
-
-            const embed = errorEmbed({ message: 'You are already registered your account.' });
-            return interaction.editReply({ embeds: [embed] });
-        }
-
-        const registerEmbed = primaryEmbed({
-            title: 'HoYoVista Registration',
-            message:
-                'By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) ' +
-                'and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).',
+    // Check if the user is already registered
+    const user = await getUser(interaction.user.id);
+    if (user) {
+      // Add event to the database if enabled
+      if (user.collectData) {
+        await addEvent(interaction.user.id, {
+          game: 'discord',
+          type: 'interaction',
+          metadata: {
+            command: 'register',
+          },
         });
+      }
 
-        const continueButton = new ButtonBuilder()
-            .setCustomId('register-disclaimer')
-            .setLabel('Agree and Register')
-            .setStyle(ButtonStyle.Success);
+      // Show the registered container
+      const registeredContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('You have already registered your account.')
+      );
 
-        // Show the registration message
-        await interaction.editReply({
-            embeds: [registerEmbed],
-            components: [new ActionRowBuilder().addComponents(continueButton)],
-        });
-    },
-    async handleButtonClick(interaction) {
-        const button = interaction.customId.split('-')[1];
-        const mongo = MongoDB.getInstance();
+      await interaction.editReply({
+        components: [registeredContainer],
+        flags: MessageFlags.IsComponentsV2,
+      });
+      return;
+    }
 
-        if (button === 'disclaimer') {
-            // Show the initial "registering" message
-            const initialEmbed = warningEmbed({ message: 'Preparing your account, this will only take a moment...' });
-            await interaction.update({ embeds: [initialEmbed], components: [] });
+    const registerContainer = new ContainerBuilder();
 
-            // Register the user
-            await mongo.initUser(interaction.user.id);
-            await addUser(interaction.user.id);
+    // Register text display
+    const registerTextDisplay = new TextDisplayBuilder().setContent(
+      [
+        '## HoYoVista Registration',
+        'By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).',
+      ].join('\n')
+    );
+    registerContainer.addTextDisplayComponents(registerTextDisplay);
 
-            // List of commands to show after registration
-            const commands = [
-                '- `/hoyolink` - Link/unlink your HoYoLAB account with your Discord account.',
-                '- `/settings` - Access and modify your account settings.',
-                '- `/data` - Manage your data, including viewing or deleting it.',
-            ].join('\n');
+    // Register button
+    const registerButton = new ButtonBuilder()
+      .setCustomId('register-disclaimer')
+      .setLabel('Agree and Register')
+      .setStyle(ButtonStyle.Success);
+    registerContainer.addActionRowComponents((row) => row.addComponents(registerButton));
 
-            // Show the success message after updating
-            const registedEmbed = successEmbed({
-                title: "You're all set~",
-                message: `Welcome to HoYoVista! Here are some commands you can use to get started:\n${commands}`,
-            });
+    // Show the registration container
+    await interaction.editReply({
+      components: [registerContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  },
+  /**
+   *
+   * @param {import("discord.js").ButtonInteraction} interaction
+   * @returns {Promise<void>}
+   */
+  async handleButtonClick(interaction) {
+    const button = interaction.customId.split('-')[1];
 
-            await interaction.editReply({ embeds: [registedEmbed] });
-        }
-    },
+    if (button === 'disclaimer') {
+      // Show processing message
+      const initialContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('Preparing your account, this will only take a moment...')
+      );
+
+      await interaction.update({
+        components: [initialContainer],
+        flags: MessageFlags.IsComponentsV2,
+      });
+
+      // Register the user
+      await addUser(interaction.user.id);
+
+      // List of commands to show after registration
+      const commands = [
+        '- `/hoyolink` - Link/unlink your HoYoLAB account with your Discord account.',
+        '- `/settings` - Access and modify your account settings.',
+        '- `/data` - Manage your data, including viewing or deleting it.',
+      ].join('\n');
+
+      // Show success message with commands list
+      const successContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          [
+            "## You're all set~",
+            'Welcome to HoYoVista! Here are some commands you can use to get started:',
+            commands,
+          ].join('\n')
+        )
+      );
+
+      await interaction.editReply({
+        components: [successContainer],
+        flags: MessageFlags.IsComponentsV2,
+      });
+    }
+  },
 };

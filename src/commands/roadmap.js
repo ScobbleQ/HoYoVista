@@ -1,28 +1,40 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { primaryEmbed } from '../utils/embedTemplates.js';
+import { ContainerBuilder, MessageFlags, SlashCommandBuilder } from 'discord.js';
 
 export default {
-    data: new SlashCommandBuilder()
-        .setName('roadmap')
-        .setDescription('View upcoming features and improvements')
-        .setIntegrationTypes([0, 1])
-        .setContexts([0, 1, 2]),
-    async execute(interaction) {
-        const embed = primaryEmbed({
-            title: '"Celestial Codex" Version 3.0.0 Roadmap',
-            fields: [
-                {
-                    name: 'Command Improvements',
-                    value: '- ~~[/notes] Honkai: Star Rail and Honkai Impact 3rd support~~\n- [/profile] Honkai: Star Rail and Honkai Impact 3rd support\n- [/notes] Improve readability/display of information\n- [/income] Add support for Honkai: Star Rail',
-                },
-                {
-                    name: 'New Commands/Features',
-                    value: '- ~~[/account] View HoYoVista account (delete data)~~\n- ~~[/income] View income for the month (Support all games)~~\n- [/wiki] Search for information on the wiki (Support all games)\n- [/builds] View character builds (Support all games + EnkaNetwork)',
-                },
-            ],
-            footer: { text: 'Last updated on Jan 15, 2025. Subject to change.' },
-        });
+  cooldown: 10,
+  data: new SlashCommandBuilder()
+    .setName('roadmap')
+    .setDescription('View upcoming features and improvements')
+    .setIntegrationTypes([0, 1])
+    .setContexts([0, 1, 2]),
+  /**
+   * @param {import("discord.js").ChatInputCommandInteraction} interaction
+   * @returns {Promise<void>}
+   */
+  async execute(interaction) {
+    const container = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          '## Moonlit Reverie (v4.0.0)',
+          '',
+          '### Command Improvements',
+          '- [/notes] Restore support to Zenless, Star Rail, and Honkai',
+          '- [/redeem] Add support for manual code redemption',
+          '',
+          '### New Commands/Features',
+          '- Monthly Income Report',
+          '- [/builds] Character Builds (integrates with Enka.Network)',
+          '- [/events] View upcoming events',
+          '- [/banners] View the banners',
+          '',
+          '— Last updated on Feb 06, 2026. Subject to change.',
+        ].join('\n')
+      )
+    );
 
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
-    },
+    await interaction.reply({
+      components: [container],
+      flags: [MessageFlags.Ephemeral, MessageFlags.IsComponentsV2],
+    });
+  },
 };

@@ -5,6 +5,6 @@ import { discordPresence } from '../../config.js';
  * @param {*} client - Discord client
  */
 export const setPresence = (client) => {
-    const random = Math.floor(Math.random() * discordPresence.length);
-    client.user.setPresence(discordPresence[random]);
+  const random = Math.floor(Math.random() * discordPresence.length);
+  client.user.setPresence(discordPresence[random]);
 };
