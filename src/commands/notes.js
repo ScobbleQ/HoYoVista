@@ -150,14 +150,6 @@ export default {
     const notesContainer = new ContainerBuilder();
 
     if (gameId === Games.GENSHIN) {
-      notesContainer
-        .addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(
-            `## Real-Time Notes\n-# There may be a certain delay in data refresh, please refer to the actual game data`
-          )
-        )
-        .addSeparatorComponents((separator) => separator);
-
       notesContainer.addSectionComponents((section) =>
         section
           .addTextDisplayComponents((textDisplay) =>
