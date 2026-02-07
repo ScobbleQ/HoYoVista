@@ -1,9 +1,4 @@
-import {
-  ContainerBuilder,
-  MessageFlags,
-  SlashCommandBuilder,
-  codeBlock,
-} from 'discord.js';
+import { ContainerBuilder, MessageFlags, SlashCommandBuilder, codeBlock } from 'discord.js';
 import { addEvent, getCookies, getUserLinkedGames } from '../db/queries.js';
 import { getUser } from '../db/queries.js';
 import { fetchNotes } from '../hoyo/api/note.js';
@@ -15,9 +10,6 @@ import { GenshinCommission } from '../utils/emojis.js';
 import { plural } from '../utils/plural.js';
 
 /** @typedef {import("../utils/typedef.js").GameID} GameID */
-
-// TODO:
-// convert HSR / HONKAI / ZZZ
 
 export default {
   cooldown: 30,
@@ -473,60 +465,6 @@ export default {
           )
         );
       }
-
-      // const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
-      // const staminaRecover =
-      //   notes.stamina_recover_time === 0
-      //     ? 'Fully Restored'
-      //     : `Fully restores <t:${Math.floor(Date.now() / 1000) + notes.stamina_recover_time}:R>`;
-      // const bpMission = `${notes.current_train_score}/${notes.max_train_score}`;
-      // const memorialArena = `${notes.battle_field.cur_reward}/${notes.battle_field.max_reward}`;
-      // const memorialArenaReset = notes.battle_field.is_open
-      //   ? `Resets <t:${notes.battle_field.schedule_end}:R>`
-      //   : 'Locked';
-      // const godOfWar = `${notes.god_war.cur_reward}/${notes.god_war.max_reward}`;
-      // const godOfWarReset = notes.god_war.is_open
-      //   ? `Resets <t:${notes.god_war.schedule_end}:R>`
-      //   : 'Closed';
-      // const embed = new EmbedBuilder()
-      //   .setColor(embedColors.primary)
-      //   .setAuthor({
-      //     name: `${nickname} (${game_role_id})`,
-      //     iconURL: GameIconUrl[gameId],
-      //   })
-      //   .addFields(
-      //     { name: 'Stamina', value: `${stamina}\n${staminaRecover}`, inline: true },
-      //     { name: 'BP Mission', value: `${bpMission}`, inline: true },
-      //     { name: '\u200B', value: '\u200B', inline: true },
-      //     {
-      //       name: 'Memorial Arena',
-      //       value: `${memorialArena}\n${memorialArenaReset}`,
-      //       inline: true,
-      //     },
-      //     { name: 'Elysian Realm', value: `${godOfWar}\n${godOfWarReset}`, inline: true }
-      //   );
-      // if (notes.ultra_endless.group_level === 0) {
-      //   const manifold = `${notes.greedy_endless.cur_reward}/${notes.greedy_endless.max_reward}`;
-      //   const manifoldReset = notes.greedy_endless.is_open
-      //     ? `Resets <t:${notes.greedy_endless.schedule_end}:R>`
-      //     : 'Closed';
-      //   embed.addFields({
-      //     name: 'Q-Manifold',
-      //     value: `${manifold}\n${manifoldReset}`,
-      //     inline: true,
-      //   });
-      // } else {
-      //   const ssDimension = `${superstringDimensionTier[notes.ultra_endless.group_level]}: ${notes.ultra_endless.challenge_score}`;
-      //   const ssDimensionReset = notes.ultra_endless.is_open
-      //     ? `Resets <t:${notes.ultra_endless.schedule_end}:R>`
-      //     : 'Closed';
-      //   embed.addFields({
-      //     name: 'Superstring Dimension',
-      //     value: `${ssDimension}\n${ssDimensionReset}`,
-      //     inline: true,
-      //   });
-      // }
-      // embeds.push(embed);
     }
 
     await interaction.editReply({
