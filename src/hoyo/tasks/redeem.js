@@ -22,12 +22,17 @@ import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
  * @param {import("discord.js").Client} client
  */
 export async function autoRedeem(client) {
+  // Random delay between 0 and 25 minutes
+  const delay = Math.floor(Math.random() * 26) * 60 * 1000;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
   const availableCodes = await fetchSeriaCodes();
   if (!availableCodes) return;
 
   const users = await getUsersWithAutoRedeem();
   const limit = pLimit(10);
 
+  console.log(`[Cron] Starting redeem for ${users.length} users`);
   const task = users.map((u) =>
     limit(async () => {
       try {

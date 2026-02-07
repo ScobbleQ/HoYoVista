@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { config } from '../../config.js';
 import { db } from './index.js';
-import { cookies, events, games, users } from './schema.js';
+import { cookies, events, games, ledgers, users } from './schema.js';
 
 /** @typedef {import("../utils/typedef.js").GameID} GameID */
 /** @typedef {import("../utils/typedef.js").User} User */
@@ -326,4 +326,25 @@ export async function resetUserSettings(uid) {
       autoRedeem: true,
     })
     .where(eq(games.uid, uid));
+}
+
+export async function getUsersWithCollectData() {
+  return await db.select({ uid: users.uid }).from(users).where(eq(users.collectData, true));
+}
+
+/**
+ *
+ * @param {string} uid
+ * @param {{ gameId: GameID, gameRoleId: string, month: number, year: number, data: any }} param1
+ * @returns
+ */
+export async function addLedger(uid, { gameId, gameRoleId, month, year, data }) {
+  return await db.insert(ledgers).values({
+    uid,
+    gameId,
+    gameRoleId,
+    month,
+    year,
+    data,
+  });
 }

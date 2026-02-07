@@ -26,6 +26,7 @@ export async function autoCheckin(client) {
   const users = await getUsersWithAutoCheckin();
   const limit = pLimit(10);
 
+  console.log(`[Cron] Starting check-in for ${users.length} users`);
   const task = users.map((u) =>
     limit(async () => {
       try {

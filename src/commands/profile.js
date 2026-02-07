@@ -171,7 +171,7 @@ export default {
     if (gameId === Games.GENSHIN) {
       const res = await fetch(`https://enka.network/api/uid/${gameKey.gameRoleId}`, {
         headers: {
-          'User-Agent': 'ScobbleQ - TESTING',
+          'User-Agent': 'ScobbleQ',
         },
       });
 
@@ -196,7 +196,7 @@ export default {
           textDisplay.setContent(
             [
               `# ${role.nickname}`,
-              `-# AR ${role.level} | ${gameKey.region} | ${gameKey.gameRoleId}`,
+              `-# \`AR ${role.level} | ${gameKey.regionName} | ${gameKey.gameRoleId}\``,
               `${playerInfo.signature}`,
             ].join('\n')
           )
@@ -221,7 +221,7 @@ export default {
     } else if (gameId === Games.ZZZ) {
       const res = await fetch(`https://enka.network/api/zzz/uid/${gameKey.gameRoleId}`, {
         headers: {
-          'User-Agent': 'ScobbleQ - TESTING',
+          'User-Agent': 'ScobbleQ',
         },
       });
 
@@ -239,7 +239,7 @@ export default {
           textDisplay.setContent(
             [
               `# ${SocialDetail.ProfileDetail.Nickname}`,
-              `-# Lv.${SocialDetail.ProfileDetail.Level} | ${gameKey.region} | ${gameKey.gameRoleId}`,
+              `-# \`Lv.${SocialDetail.ProfileDetail.Level} | ${gameKey.regionName} | ${gameKey.gameRoleId}\``,
               `${SocialDetail.Desc || "There's nothing here at all..."}`,
             ].join('\n')
           )

@@ -165,8 +165,12 @@ export default {
                     `### ${gameName} (${censorUid({ uid: game.gameRoleId, flag: user.private })})`,
                     'Daily Check-in Claimed',
                     `${checkin.award.name} x${checkin.award.cnt}`,
-                    `${checkin.missedDays > 0 ? `-# Missed ${checkin.missedDays} ${plural(checkin.missedDays, 'day')}` : ''}`.trim(),
-                  ].join('\n')
+                    checkin.missedDays > 0
+                      ? `-# Missed ${checkin.missedDays} ${plural(checkin.missedDays, 'day')}`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join('\n')
                 )
               )
               .setThumbnailAccessory((thumbnail) => thumbnail.setURL(checkin.award.icon))
@@ -259,8 +263,12 @@ export default {
               `### ${gameName} (${censorUid({ uid: gameKey.gameRoleId, flag: user.private })})`,
               'Daily Check-in Claimed',
               `${checkin.award.name} x${checkin.award.cnt}`,
-              `-# Missed ${checkin.missedDays} ${plural(checkin.missedDays, 'day')}`,
-            ].join('\n')
+              checkin.missedDays > 0
+                ? `-# Missed ${checkin.missedDays} ${plural(checkin.missedDays, 'day')}`
+                : '',
+            ]
+              .filter(Boolean)
+              .join('\n')
           )
         )
         .setThumbnailAccessory((thumbnail) => thumbnail.setURL(checkin.award.icon))

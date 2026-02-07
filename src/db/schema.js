@@ -1,13 +1,18 @@
+import { sql } from 'drizzle-orm';
 import {
   bigint,
   bigserial,
   boolean,
   foreignKey,
+  index,
+  integer,
   jsonb,
   pgSequence,
   pgTable,
+  smallint,
   text,
   timestamp,
+  uuid,
 } from 'drizzle-orm/pg-core';
 
 export const gamesIdSeq = pgSequence('games_id_seq', {
@@ -61,6 +66,12 @@ export const events = pgTable(
     metadata: jsonb(),
   },
   (table) => [
+    index('events_uid_idx').using('btree', table.uid.asc().nullsLast().op('text_ops')),
+    index('events_uid_timestamp_idx').using(
+      'btree',
+      table.uid.asc().nullsLast().op('text_ops'),
+      table.timestamp.asc().nullsLast().op('text_ops')
+    ),
     foreignKey({
       columns: [table.uid],
       foreignColumns: [users.uid],
@@ -92,10 +103,33 @@ export const games = pgTable(
     game: text().notNull(),
   },
   (table) => [
+    index('games_uid_idx').using('btree', table.uid.asc().nullsLast().op('text_ops')),
     foreignKey({
       columns: [table.uid],
       foreignColumns: [users.uid],
       name: 'games_uid_fkey',
     }).onDelete('cascade'),
+  ]
+);
+
+export const ledgers = pgTable(
+  'ledgers',
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    uid: text().notNull(),
+    month: smallint().notNull(),
+    year: integer().notNull(),
+    gameId: text('game_id').notNull(),
+    gameRoleId: text('game_role_id').notNull(),
+    data: jsonb(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.uid],
+      foreignColumns: [users.uid],
+      name: 'ledgers_uid_fkey',
+    })
+      .onUpdate('cascade')
+      .onDelete('cascade'),
   ]
 );
