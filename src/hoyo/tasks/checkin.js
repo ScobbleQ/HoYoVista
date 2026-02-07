@@ -112,13 +112,19 @@ export async function autoCheckin(client) {
 
         // Send check-in summary to user
         if (u.notifyCheckin) {
-          await client.users.send(u.uid, {
-            components: [checkinContainer],
-            flags: MessageFlags.IsComponentsV2,
-          });
+          try {
+            await client.users.send(u.uid, {
+              components: [checkinContainer],
+              flags: MessageFlags.IsComponentsV2,
+            });
+          } catch (/** @type {any} */ error) {
+            logger.error(`Auto Checkin: Failed to DM user: ${u.uid}`, {
+              stack: error.stack,
+            });
+          }
         }
       } catch (/** @type {any} */ error) {
-        logger.error(`Auto Checkin: Failed for user ${u.uid}`, {
+        logger.error(`Auto Checkin: Failed for user: ${u.uid}`, {
           stack: error.stack,
         });
       }

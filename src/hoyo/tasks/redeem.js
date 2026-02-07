@@ -172,13 +172,19 @@ export async function autoRedeem(client) {
         }
 
         if (didAttemptRedeem && u.notifyRedeem) {
-          await client.users.send(u.uid, {
-            components: [redeemContainer],
-            flags: MessageFlags.IsComponentsV2,
-          });
+          try {
+            await client.users.send(u.uid, {
+              components: [redeemContainer],
+              flags: MessageFlags.IsComponentsV2,
+            });
+          } catch (/** @type {any} */ error) {
+            logger.error(`Auto Redeem: Failed to DM user: ${u.uid}`, {
+              stack: error.stack,
+            });
+          }
         }
       } catch (/** @type {any} */ error) {
-        logger.error(`Auto Redeem: Failed for user ${u.uid}`, { stack: error.stack });
+        logger.error(`Auto Redeem: Failed for user: ${u.uid}`, { stack: error.stack });
       } finally {
         await cleanAttemptedCodes(u.uid, availableCodes);
       }
