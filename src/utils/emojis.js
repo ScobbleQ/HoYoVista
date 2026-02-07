@@ -12,6 +12,14 @@ export const Toggles = Object.freeze({
   false: '<:TOGGLE_OFF:1321574709225324605>',
 });
 
+export const GenshinCommission = Object.freeze({
+  temp: 'e',
+  TaskRewardStatusUnfinished: '<:TaskRewardStatusUnfinished:1469542270301638820>',
+  AttendanceRewardStatusTakenAward: '<:AttendanceRewardStatusTakenAward:1469542272273219614>',
+  AttendanceRewardStatusUnfinished: 'e',
+  SEP: '<:EncounterPoint:1469545256553812199>',
+});
+
 export const StygianDifficulty = Object.freeze({
   0: '<:UI_LeyLineChallenge_Medal_0:1457950382625132654>',
   1: '<:UI_LeyLineChallenge_Medal_1:1457950384088940594>',

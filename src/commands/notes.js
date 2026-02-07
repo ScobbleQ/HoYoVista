@@ -1,4 +1,9 @@
-import { ContainerBuilder, MessageFlags, SlashCommandBuilder, codeBlock } from 'discord.js';
+import {
+  ContainerBuilder,
+  MessageFlags,
+  SlashCommandBuilder,
+  codeBlock,
+} from 'discord.js';
 import { addEvent, getCookies, getUserLinkedGames } from '../db/queries.js';
 import { getUser } from '../db/queries.js';
 import { fetchNotes } from '../hoyo/api/note.js';
@@ -6,6 +11,7 @@ import { Games } from '../hoyo/utils/constants.js';
 import { superstringDimensionTier } from '../hoyo/utils/constants.js';
 import { fetchLinkedAccounts } from '../hoyo/utils/fetchLinkedAccounts.js';
 import { createTextContainer } from '../utils/containerBuilder.js';
+import { GenshinCommission } from '../utils/emojis.js';
 import { plural } from '../utils/plural.js';
 
 /** @typedef {import("../utils/typedef.js").GameID} GameID */
@@ -152,173 +158,322 @@ export default {
     const notesContainer = new ContainerBuilder();
 
     if (gameId === Games.GENSHIN) {
-      notesContainer.addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(
-          `# Real-Time Notes\n-# There may be a certain delay in data refresh, please refer to the actual game data`
+      notesContainer
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            `## Real-Time Notes\n-# There may be a certain delay in data refresh, please refer to the actual game data`
+          )
         )
+        .addSeparatorComponents((separator) => separator);
+
+      notesContainer.addSectionComponents((section) =>
+        section
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              [
+                '### Original Resin',
+                notes.resin_recovery_time === '0'
+                  ? 'Fully replenished'
+                  : `Fully replenished in ${generateFutureRelativeTime(notes.resin_recovery_time)}`,
+                codeBlock('js', `${notes.current_resin}/${notes.max_resin}`),
+              ].join('\n')
+            )
+          )
+          .setThumbnailAccessory((thumbnail) =>
+            thumbnail.setURL(
+              'https://act.hoyolab.com/app/community-game-records-sea/images/resion@3x.1b655e50.png'
+            )
+          )
       );
 
-      let resinText = '### Original Resin\n';
-      if (notes.resin_recovery_time === '0') {
-        resinText += 'Original Resin is fully replenished';
-      } else {
-        resinText += `Fully replenished in ${generateFutureRelativeTime(notes.resin_recovery_time)}`;
+      if (notes.resin_discount_num_limit) {
+        notesContainer.addSeparatorComponents((separator) => separator);
+        notesContainer.addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents((textDisplay) =>
+              textDisplay.setContent(
+                [
+                  '### Enemies of Note',
+                  'Remaining resin cost-halving opportunities this week',
+                  codeBlock(
+                    'js',
+                    `${notes.remain_resin_discount_num}/${notes.resin_discount_num_limit}`
+                  ),
+                ].join('\n')
+              )
+            )
+            .setThumbnailAccessory((thumbnail) =>
+              thumbnail.setURL(
+                'https://act.hoyolab.com/app/community-game-records-sea/images/enemy@3x.0ed07f3b.png'
+              )
+            )
+        );
       }
 
-      notesContainer.addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(
-          `${resinText}\n${codeBlock('js', `${notes.current_resin}/${notes.max_resin}`)}`
-        )
-      );
-
-      notesContainer.addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(
-          `### Enemies of Note\nRemaining resin cost-halving opportunities this week\n${codeBlock('js', `${notes.remain_resin_discount_num}/${notes.resin_discount_num_limit}`)}`
-        )
-      );
-
       if (notes.daily_task) {
-        // TODO: Add more information
         const dailyTask = notes.daily_task;
-        console.dir(dailyTask, { depth: null });
-        notesContainer.addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(
-            `### Daily Commission Reward\n${codeBlock('js', `${dailyTask.finished_num}/${dailyTask.total_num}`)}`
-          )
+
+        notesContainer.addSeparatorComponents((separator) => separator);
+        notesContainer.addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents((textDisplay) =>
+              textDisplay.setContent(
+                [
+                  '### Daily Commission Reward',
+                  '-# Daily Commissions',
+                  dailyTask.task_rewards
+                    .map(
+                      /** @param {{ status: "temp" | "TaskRewardStatusUnfinished"}} t */ (t) =>
+                        GenshinCommission[t.status]
+                    )
+                    .join(''),
+                  '-# Encounter Points',
+                  dailyTask.attendance_rewards
+                    .map(
+                      /** @param {{ status: "AttendanceRewardStatusTakenAward" | "AttendanceRewardStatusUnfinished"}} t */ (
+                        t
+                      ) => GenshinCommission[t.status]
+                    )
+                    .join(''),
+                  `Long-Term Encounter Points \`${GenshinCommission.SEP}x${dailyTask.stored_attendance}\``,
+                  codeBlock(
+                    'js',
+                    dailyTask.finished_num === dailyTask.total_num ? 'All Claimed' : 'not'
+                  ),
+                ].join('\n')
+              )
+            )
+            .setThumbnailAccessory((thumbnail) =>
+              thumbnail.setURL(
+                'https://act.hoyolab.com/app/community-game-records-sea/images/daily@3x.bb9ad18b.png'
+              )
+            )
         );
       }
 
       // Realm is unlocked
       if (notes.max_home_coin !== 0) {
-        notesContainer.addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(
-            `### Jar of Riches - Realm Currency\nThe Limit will be reached ${generateFutureRelativeTime(notes.home_coin_recovery_time)}\n${codeBlock('js', `${notes.current_home_coin}/${notes.max_home_coin}`)}`
-          )
+        notesContainer.addSeparatorComponents((separator) => separator);
+        notesContainer.addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents((textDisplay) =>
+              textDisplay.setContent(
+                [
+                  '### Jar of Riches - Realm Currency',
+                  `The Limit will be reached ${generateFutureRelativeTime(notes.home_coin_recovery_time)}`,
+                  codeBlock('js', `${notes.current_home_coin}/${notes.max_home_coin}`),
+                ].join('\n')
+              )
+            )
+            .setThumbnailAccessory((thumbnail) =>
+              thumbnail.setURL(
+                'https://act.hoyolab.com/app/community-game-records-sea/images/money@3x.0680271d.png'
+              )
+            )
         );
       }
 
       // Parametric Transformer is obtained
       if (notes.transformer.obtained) {
-        const transformer = notes.transformer;
-        const recoveryTime = transformer.recovery_time.Day;
-        notesContainer.addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(
-            `### Parametric Transformer\nCan be used again in ${recoveryTime} ${plural(recoveryTime, 'day')} ${codeBlock(`${transformer.recovery_time.reached ? 'Obtained' : 'Cooldown in progress'}`)}`
-          )
+        const recoveryTime = notes.transformer.recovery_time.Day;
+
+        notesContainer.addSeparatorComponents((separator) => separator);
+        notesContainer.addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents((textDisplay) =>
+              textDisplay.setContent(
+                [
+                  '### Parametric Transformer',
+                  `Can be used again in ${recoveryTime} ${plural(recoveryTime, 'day')}`,
+                  codeBlock(
+                    'js',
+                    `${notes.transformer.recovery_time.reached ? 'Obtained' : 'Cooldown in progress'}`
+                  ),
+                ].join('\n')
+              )
+            )
+            .setThumbnailAccessory((thumbnail) =>
+              thumbnail.setURL(
+                'https://act.hoyolab.com/app/community-game-records-sea/images/qual@3x.4944dc56.png'
+              )
+            )
         );
       }
     } else if (gameId === Games.ZZZ) {
-      // const batteryLevel = `${notes.energy.progress.current}/${notes.energy.progress.max}`;
-      // const batteryRestore =
-      //   notes.energy.restore === 0
-      //     ? 'Fully Recovered'
-      //     : `Full <t:${Math.floor(Date.now() / 1000) + notes.energy.restore}:R>`;
-      // embeds.push(
-      //   new EmbedBuilder()
-      //     .setColor(embedColors.primary)
-      //     .setAuthor({
-      //       name: `${nickname} (${game_role_id})`,
-      //       iconURL: GameIconUrl[gameId],
-      //     })
-      //     .setThumbnail(
-      //       'https://act.hoyolab.com/app/zzz-game-record/images/battery-icon.b8c5b557.png'
-      //     )
-      //     .setDescription(`**Battery Charge** ${batteryLevel}\n${batteryRestore}`)
-      // );
-      // embeds.push(
-      //   new EmbedBuilder()
-      //     .setColor(embedColors.primary)
-      //     .setTitle('Daily Missions')
-      //     .addFields(
-      //       {
-      //         name: 'Engagement Today',
-      //         value: `${notes.vitality.current}/${notes.vitality.max}`,
-      //       },
-      //       {
-      //         name: 'Scratch Card Mania',
-      //         value: notes.card_sign === 'CardSignNo' ? 'Incomplete' : 'Complete',
-      //       },
-      //       {
-      //         name: 'Video Store Management',
-      //         value:
-      //           notes.vhs_sale.sale_state === 'SaleStateDone'
-      //             ? 'Revenue Available'
-      //             : 'Currently Open',
-      //       }
-      //     )
-      // );
-      // if (notes.bounty_commission || notes.weekly_task) {
-      //   const resetMissionsEmbed = new EmbedBuilder()
-      //     .setColor(embedColors.primary)
-      //     .setTitle('Season Missions');
-      //   if (notes.bounty_commission) {
-      //     const bountyProgress = `${notes.bounty_commission.num}/${notes.bounty_commission.total}`;
-      //     const bountyReset = `Refreshes <t:${Math.floor(Date.now() / 1000) + notes.bounty_commission.refresh_time}:R>`;
-      //     resetMissionsEmbed.addFields({
-      //       name: 'Bounty Commission',
-      //       value: `Progress ${bountyProgress}\n${bountyReset}`,
-      //     });
-      //   }
-      //   if (notes.weekly_task) {
-      //     const riduPoints = notes.weekly_task
-      //       ? `${notes.weekly_task.cur_point}/${notes.weekly_task.max_point}`
-      //       : '-';
-      //     const riduReset = notes.weekly_task
-      //       ? `Refreshes <t:${Math.floor(Date.now() / 1000) + notes.weekly_task.refresh_time}:R>`
-      //       : '-';
-      //     resetMissionsEmbed.addFields({
-      //       name: 'Ridu Weekly',
-      //       value: `Points ${riduPoints}\n${riduReset}`,
-      //     });
-      //   }
-      //   embeds.push(resetMissionsEmbed);
-      // }
+      notesContainer.addSectionComponents((section) =>
+        section
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              `### Battery Charge\n**${notes.energy.progress.current}/${notes.energy.progress.max}**\n${notes.energy.restore === 0 ? 'Fully Recovered' : `Full at ${notes.energy.hour}:${notes.energy.minute} ${notes.energy.day_type === 2 ? 'Tomorrow' : 'Today'}`}`
+            )
+          )
+          .setThumbnailAccessory((thumbnail) =>
+            thumbnail.setURL(
+              'https://act.hoyolab.com/app/zzz-game-record/images/battery-icon.b8c5b557.png'
+            )
+          )
+      );
+
+      notesContainer.addSeparatorComponents((separator) => separator);
+
+      notesContainer.addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          [
+            `### Daily Missions`,
+            `Engagement Today: **${notes.vitality.current}/${notes.vitality.max}**`,
+            `Scratch Card Mania: **${notes.card_sign === 'CardSignNo' ? 'Incomplete' : 'Complete'}**`,
+            `Video Store Management: **${notes.vhs_sale.sale_state === 'SaleStateDone' ? 'Revenue Available' : 'Currently Open'}**`,
+          ].join('\n')
+        )
+      );
+
+      if (notes.bounty_commission || notes.weekly_task) {
+        const seasonLines = ['### Season Missions'];
+
+        if (notes.bounty_commission) {
+          seasonLines.push(
+            `Bounty Commission Progress: **${notes.bounty_commission.num}/${notes.bounty_commission.total}**`,
+            notes.bounty_commission.refresh_time > 0
+              ? `-# Refreshes <t:${Math.floor(Date.now() / 1000) + notes.bounty_commission.refresh_time}:R>`
+              : '-'
+          );
+        }
+        if (notes.weekly_task) {
+          seasonLines.push(
+            `Ridu Weekly Points: **${notes.weekly_task.cur_point}/${notes.weekly_task.max_point}**`,
+            notes.weekly_task.refresh_time > 0
+              ? `-# Refreshes <t:${Math.floor(Date.now() / 1000) + notes.weekly_task.refresh_time}:R>`
+              : '-'
+          );
+        }
+
+        notesContainer.addSeparatorComponents((separator) => separator);
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(seasonLines.join('\n'))
+        );
+      }
     } else if (gameId === Games.STARRAIL) {
-      // const trailblazerPowderEmoji = '<:6_TrailblazerPowder:1328559271423770655>';
-      // const reservedPowderEmoji = '<:6_ReservedPowder:1328559285185155196>';
-      // const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
-      // const staminaRecover =
-      //   notes.stamina_recover_time === 0
-      //     ? 'Fully Restored'
-      //     : `Fully restores <t:${notes.stamina_full_ts}:R>`;
-      // const staminaReserved =
-      //   notes.is_reserve_stamina_full === true ? 'Fully Maxed' : notes.current_reserve_stamina;
-      // const dailyTraining = `${notes.current_train_score}/${notes.max_train_score}`;
-      // const assignments = `${notes.accepted_epedition_num}/${notes.total_expedition_num}`;
-      // const echoOfWar = `${notes.weekly_cocoon_cnt}/${notes.weekly_cocoon_limit}`;
-      // const roguePoint = `${notes.current_rogue_score}/${notes.max_rogue_score}`;
-      // const embed = new EmbedBuilder()
-      //   .setColor(embedColors.primary)
-      //   .setAuthor({
-      //     name: `${nickname} (${game_role_id})`,
-      //     iconURL: GameIconUrl[gameId],
-      //   })
-      //   .addFields(
-      //     {
-      //       name: `${trailblazerPowderEmoji} ${stamina}`,
-      //       value: staminaRecover,
-      //       inline: false,
-      //     },
-      //     {
-      //       name: `${reservedPowderEmoji} ${staminaReserved}`,
-      //       value: 'Reserved Trailblaze Power',
-      //       inline: false,
-      //     },
-      //     { name: 'Daily Training', value: dailyTraining, inline: true },
-      //     { name: 'Assignments', value: assignments, inline: true },
-      //     { name: 'Echo of War', value: echoOfWar, inline: true },
-      //     { name: 'Weekly Points', value: roguePoint, inline: true }
-      //   );
-      // if (notes.rogue_tourn_weekly_unlocked) {
-      //   const bonusSynchronicity = `${notes.rogue_tourn_weekly_cur}/${notes.rogue_tourn_weekly_max}`;
-      //   embed.addFields({
-      //     name: 'Bonus Synchronicity Points',
-      //     value: bonusSynchronicity,
-      //     inline: true,
-      //   });
-      // }
-      // embeds.push(embed);
+      notesContainer.addSectionComponents((section) =>
+        section
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              [
+                '### Trailblazer Powder',
+                `**${notes.current_stamina}**/${notes.max_stamina}`,
+                notes.stamina_recover_time === 0
+                  ? 'Fully Restored'
+                  : `Fully restores <t:${notes.stamina_full_ts}:R>`,
+              ].join('\n')
+            )
+          )
+          .setThumbnailAccessory((thumbnail) =>
+            thumbnail.setURL(
+              'https://act.hoyolab.com/app/community-game-records-sea/rpg/images/icon_1.c568ba00.png'
+            )
+          )
+      );
+
+      notesContainer.addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `### Daily Training\n**${notes.current_train_score}**/${notes.max_train_score}`
+        )
+      );
+
+      if (notes.weekly_cocoon_limit) {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            `### Echo of War\n**${notes.weekly_cocoon_cnt}**/${notes.weekly_cocoon_limit}`
+          )
+        );
+      }
+
+      if (notes.max_rogue_score) {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            [
+              '### Simulated Universe Points',
+              `**${notes.current_rogue_score}**/${notes.max_rogue_score}`,
+            ].join('\n')
+          )
+        );
+      }
+
+      if (notes.grid_fight_weekly_max) {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            [
+              '### Currency War Points',
+              `**${notes.grid_fight_weekly_cur}**/${notes.grid_fight_weekly_max}`,
+            ].join('\n')
+          )
+        );
+      }
     } else if (gameId === Games.HONKAI) {
+      notesContainer.addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          [
+            '### Stamina',
+            `**${notes.current_stamina}**/${notes.max_stamina}`,
+            notes.stamina_recover_time === 0
+              ? 'Fully Restored'
+              : `Fully restores <t:${notes.stamina_recover_time}:R>`,
+            `Daily BP: **${notes.current_train_score}**/${notes.max_train_score}`,
+          ].join('\n')
+        )
+      );
+
+      if (notes.ultra_endless.group_level === 0) {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            [
+              '### Q-Manifold',
+              notes.greedy_endless.is_open
+                ? `Time Left: <t:${notes.greedy_endless.schedule_end}:R>`
+                : 'Closed',
+              `Current Score: **${notes.greedy_endless.cur_reward}**/${notes.greedy_endless.max_reward}`,
+            ].join('\n')
+          )
+        );
+      } else {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            [
+              '### Superstring Dimension',
+              notes.ultra_endless.is_open
+                ? `Time Left: <t:${notes.ultra_endless.schedule_end}:R>`
+                : 'Closed',
+              `Current Score: **${notes.ultra_endless.challenge_score}**`,
+              `Current Tier: ${superstringDimensionTier[/** @type {keyof typeof superstringDimensionTier} */ (notes.ultra_endless.group_level)]}`,
+            ].join('\n')
+          )
+        );
+      }
+
+      notesContainer.addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          [
+            '### Memorial Arena',
+            notes.battle_field.is_open
+              ? `Time Left: <t:${notes.battle_field.schedule_end}:R>`
+              : 'Locked',
+            `Challenge Rewards: **${notes.battle_field.cur_reward}**/${notes.battle_field.max_reward}`,
+            `SSS-rank Rewards: **${notes.battle_field.cur_sss_reward}**/${notes.battle_field.max_sss_reward}`,
+          ].join('\n')
+        )
+      );
+
+      if (notes.god_war) {
+        notesContainer.addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent(
+            [
+              '### Elysian Realm',
+              notes.god_war.is_open ? `Time Left: <t:${notes.god_war.schedule_end}:R>` : 'Closed',
+              `Current Score: **${notes.god_war.cur_reward}**/${notes.god_war.max_reward}`,
+            ].join('\n')
+          )
+        );
+      }
+
       // const stamina = `${notes.current_stamina}/${notes.max_stamina}`;
       // const staminaRecover =
       //   notes.stamina_recover_time === 0
@@ -376,7 +531,7 @@ export default {
 
     await interaction.editReply({
       components: [notesContainer],
-      flags: MessageFlags.IsComponentsV2,
+      flags: [MessageFlags.IsComponentsV2],
     });
   },
 };
