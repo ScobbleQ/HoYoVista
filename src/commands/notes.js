@@ -227,7 +227,8 @@ export default {
                       ) => GenshinCommission[t.status]
                     )
                     .join(''),
-                  `Long-Term Encounter Points \`${GenshinCommission.SEP}x${dailyTask.stored_attendance}\``,
+                  '-# Long-Term Encounter Points',
+                  `${GenshinCommission.SEP} x${dailyTask.stored_attendance}`,
                   codeBlock(
                     'js',
                     dailyTask.finished_num === dailyTask.total_num ? 'All Claimed' : 'not'
