@@ -42,7 +42,7 @@ export const cookies = pgTable(
     ltmidV2: text('ltmid_v2'),
     ltokenV2: text('ltoken_v2'),
     ltuidV2: text('ltuid_v2'),
-    mi18Nlang: text('mi18nlang'),
+    mi18Nlang: text('mi18nlang').default('en-us').notNull(),
     accountIdV2: text('account_id_v2'),
     accountMidV2: text('account_mid_v2'),
   },

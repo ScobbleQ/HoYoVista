@@ -20,7 +20,7 @@ import { getWebHeader } from '../utils/header.js';
 /**
  * @param {GameID} gameId
  * @param {{ cookies: Cookie }} param1
- * @returns {Promise<CheckinResponse | null>}
+ * @returns {Promise<CheckinResponse>}
  */
 export async function fetchCheckin(gameId, { cookies }) {
   const url = getCheckinUrl(gameId, cookies.mi18Nlang ?? '');
@@ -49,7 +49,9 @@ export async function fetchCheckin(gameId, { cookies }) {
 
   try {
     const response = await axios.post(url, requestData, { headers });
-    if (response.status !== 200) return null;
+    if (response.status !== 200) {
+      return { status: 'Failed', retcode: -1, message: response.statusText };
+    }
 
     // Check-in failed
     if (response.data.retcode !== 0) {
@@ -68,8 +70,8 @@ export async function fetchCheckin(gameId, { cookies }) {
       award: details.award,
       timestamp: details.timestamp,
     };
-  } catch {
-    return null;
+  } catch (/** @type {any} */ error) {
+    return { status: 'Failed', retcode: -1, message: error.message || 'An unknown error occurred' };
   }
 }
 
