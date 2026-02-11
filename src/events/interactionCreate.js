@@ -55,7 +55,7 @@ export default {
       const command = client.commands.get(interaction.commandName);
 
       if (!command || typeof command.autocomplete !== 'function') {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        logger.error(`No command matching ${interaction.commandName} was found.`);
         return;
       }
 

@@ -49,7 +49,10 @@ export async function fetchCheckin(gameId, { cookies }) {
 
   try {
     const response = await axios.post(url, requestData, { headers });
-    if (response.status !== 200) {
+    if (response.status === 429) {
+      console.log(response.headers);
+      return { status: 'Failed', retcode: -1, message: 'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.' };
+    } else if (response.status !== 200) {
       return { status: 'Failed', retcode: -1, message: response.statusText };
     }
 
