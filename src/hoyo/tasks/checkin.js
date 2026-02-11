@@ -11,6 +11,7 @@ import logger from '../../utils/logger.js';
 import { plural } from '../../utils/plural.js';
 import { censorUid } from '../../utils/privacy.js';
 import { fetchCheckin } from '../api/checkin.js';
+import { delayMs } from '../utils/delay.js';
 
 /** @typedef {import("../../utils/typedef.js").GameID} GameID */
 
@@ -108,6 +109,9 @@ export async function autoCheckin(client) {
                 .setThumbnailAccessory((thumbnail) => thumbnail.setURL(checkin.award.icon))
             );
           }
+
+          // Delay between games to avoid 429 errors
+          await delayMs(1500);
         }
 
         // Send check-in summary to user

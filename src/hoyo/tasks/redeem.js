@@ -14,6 +14,7 @@ import { redeemCode } from '../api/redeem.js';
 import { cleanAttemptedCodes } from '../utils/cleanAttemptedCodes.js';
 import { Games } from '../utils/constants.js';
 import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
+import { delayMs } from '../utils/delay.js';
 
 /** @typedef {import("../../utils/typedef.js").GameID} GameID */
 
@@ -162,7 +163,7 @@ export async function autoRedeem(client) {
             }
 
             // Add a 5.5 second delay between code redemptions to avoid rate limiting
-            await new Promise((resolve) => setTimeout(resolve, 5500));
+            await delayMs(5500);
           }
 
           redeemContainer.addTextDisplayComponents((textDisplay) =>
