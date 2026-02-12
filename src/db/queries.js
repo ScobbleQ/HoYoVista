@@ -39,7 +39,7 @@ export async function getUser(uid) {
 export async function addUser(uid) {
   await db.insert(users).values({
     uid,
-    createdAt: new Date().toISOString(),
+    createdAt: Math.floor(Date.now() / 1000).toString(),
     subscribed: true,
     private: false,
     collectData: true,
@@ -98,7 +98,7 @@ export async function updateGame(uid, { gameId, field, value }) {
 }
 
 /**
- * Add an event to the database
+ * Add an event to the database (only for production environment)
  * @param {string} uid - The Discord UID
  * @param {{ game: string, type: string, metadata?: Object }} param1
  */
@@ -108,7 +108,7 @@ export async function addEvent(uid, { game, type, metadata = {} }) {
     uid,
     game,
     type,
-    metadata: metadata || {},
+    metadata: metadata || null,
   });
 }
 
@@ -149,7 +149,7 @@ export async function setCookies(uid, { hoyolabCookies }) {
     ltmidV2: hoyolabCookies.ltmidV2,
     ltokenV2: hoyolabCookies.ltokenV2,
     ltuidV2: hoyolabCookies.ltuidV2,
-    mi18Nlang: hoyolabCookies.mi18Nlang,
+    mi18Nlang: hoyolabCookies.mi18Nlang || 'en-us',
     accountIdV2: hoyolabCookies.accountIdV2,
     accountMidV2: hoyolabCookies.accountMidV2,
   });
@@ -158,7 +158,6 @@ export async function setCookies(uid, { hoyolabCookies }) {
 /**
  * Get cookies for a user
  * @param {string} uid - The Discord UID
- * @returns {Promise<Cookie>}
  */
 export async function getCookies(uid) {
   const hoyoCookies = await db

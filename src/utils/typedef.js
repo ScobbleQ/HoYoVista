@@ -27,10 +27,10 @@
  * Row returned from `cookies` table
  * @typedef {Object} Cookie
  * @property {string | null} ltmidV2
- * @property {string | null} ltokenV2
- * @property {string | null} ltuidV2
- * @property {string | null} mi18Nlang
- * @property {string | null} accountIdV2
+ * @property {string} ltokenV2
+ * @property {string} ltuidV2
+ * @property {string} mi18Nlang
+ * @property {string} accountIdV2
  * @property {string | null} accountMidV2
  */
 

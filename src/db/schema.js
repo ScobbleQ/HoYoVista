@@ -40,10 +40,10 @@ export const cookies = pgTable(
   {
     uid: text().primaryKey().notNull(),
     ltmidV2: text('ltmid_v2'),
-    ltokenV2: text('ltoken_v2'),
-    ltuidV2: text('ltuid_v2'),
+    ltokenV2: text('ltoken_v2').notNull(),
+    ltuidV2: text('ltuid_v2').notNull(),
     mi18Nlang: text('mi18nlang').default('en-us').notNull(),
-    accountIdV2: text('account_id_v2'),
+    accountIdV2: text('account_id_v2').notNull(),
     accountMidV2: text('account_mid_v2'),
   },
   (table) => [
