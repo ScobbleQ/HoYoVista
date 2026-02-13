@@ -25,7 +25,7 @@ export class Cron {
    * Start all cron jobs
    */
   startJobs() {
-    logger.info(`Cron: Starting ${this.#jobs.length} jobs`);
+    logger.info(`[Cron] Starting ${this.#jobs.length} jobs`);
     this.#jobs.forEach((job) => job.start());
   }
 
@@ -33,7 +33,7 @@ export class Cron {
    * Stop all cron jobs
    */
   stopJobs() {
-    logger.info(`Cron: Stopping ${this.#jobs.length} jobs`);
+    logger.info(`[Cron] Stopping ${this.#jobs.length} jobs`);
     this.#jobs.forEach((job) => job.stop());
   }
 }

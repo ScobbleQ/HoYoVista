@@ -22,10 +22,10 @@ async function loadCommands() {
 
     if (cmd && 'data' in cmd && 'execute' in cmd) {
       commands.push(cmd.data.toJSON());
-      logger.info(`Loaded slash command: ${cmd.data.name}`);
+      logger.info(`[Discord] Loaded slash command: ${cmd.data.name}`);
     } else {
       logger.warn(
-        `[WARNING] Command at ${filePath} is missing required "data" or "execute" property.`
+        `[Discord] Command at ${filePath} is missing required "data" or "execute" property.`
       );
     }
   }
@@ -37,15 +37,15 @@ async function loadCommands() {
   const rest = new REST().setToken(config.token);
 
   try {
-    logger.info(`Started refreshing ${commands.length} application (/) commands.`);
+    logger.info(`[Discord] Started refreshing ${commands.length} application (/) commands.`);
     const data = await rest.put(Routes.applicationCommands(config.clientId), {
       body: commands,
     });
 
     logger.info(
-      `Successfully reloaded ${Array.isArray(data) ? data.length : 0} application (/) commands.`
+      `[Discord] Successfully reloaded ${Array.isArray(data) ? data.length : 0} application (/) commands.`
     );
   } catch (/** @type {any} */ error) {
-    logger.error('Failed to reload commands:', { stack: error.stack });
+    logger.error('[Discord] Failed to reload commands:', { stack: error.stack });
   }
 })();

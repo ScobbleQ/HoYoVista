@@ -23,7 +23,7 @@ import { getWebHeader } from '../utils/header.js';
  * @returns {Promise<CheckinResponse>}
  */
 export async function fetchCheckin(gameId, { cookies }) {
-  const url = getCheckinUrl(gameId, cookies.mi18Nlang ?? '');
+  const url = getCheckinUrl(gameId, cookies.mi18Nlang);
   const headers = getWebHeader({ hoyolabCookies: cookies });
 
   // Modify headers for specific games
@@ -48,12 +48,18 @@ export async function fetchCheckin(gameId, { cookies }) {
   }
 
   try {
-    const response = await axios.post(url, requestData, { headers });
-    if (response.status === 429) {
-      console.log(response.headers);
-      return { status: 'Failed', retcode: -1, message: 'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.' };
-    } else if (response.status !== 200) {
+    const response = await axios.post(url, requestData, { headers });  
+    // HoYo always return 200, this is for post failures  
+    if (response.status !== 200) {
       return { status: 'Failed', retcode: -1, message: response.statusText };
+    }
+
+    console.debug(response.data.retcode);
+
+    // Loosely check for rate limit
+    if (response.data.retcode == 429) {
+      console.debug(response.headers);
+      return { status: 'Failed', retcode: -1, message: 'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.' };
     }
 
     // Check-in failed
@@ -62,7 +68,7 @@ export async function fetchCheckin(gameId, { cookies }) {
     }
 
     // Get checkin details
-    const details = await getCheckinDetails(gameId, cookies.mi18Nlang ?? '', cookies);
+    const details = await getCheckinDetails(gameId, cookies.mi18Nlang, cookies);
     // Getting extra details failed BUT check-in was successful
     if (!details) return { status: 'SuccessNoDetails' };
 

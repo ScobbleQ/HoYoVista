@@ -25,7 +25,7 @@ export async function saveMonthlyIncome() {
   // Get month and year
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
-  console.log(`[Cron] Saving income for ${month}/${year}`);
+  logger.info(`[Cron:AIncome] Saving income for ${month}/${year}`);
 
   const task = users.map((u) =>
     limit(async () => {
@@ -62,10 +62,12 @@ export async function saveMonthlyIncome() {
           });
         }
       } catch (/** @type {any} */ error) {
-        logger.error(`Save Monthly Income: Failed for user ${u.uid}`, { stack: error.stack });
+        logger.error(`[Cron:AIncome] Failed for user ${u.uid}`, { stack: error.stack });
       }
     })
   );
 
-  await Promise.allSettled(task);
+  await Promise.allSettled(task).then((r) => {
+    logger.info(`[Cron:AIncome] Income saved for ${r.length} users`);
+  });
 }

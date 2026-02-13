@@ -29,7 +29,7 @@ async function initializeDiscordBot() {
       if ('data' in command.default && 'execute' in command.default) {
         client.commands.set(command.default.data.name, command.default);
       } else {
-        logger.warn(`Discord: Command at ${filePath} missing "data" or "execute"`);
+        logger.warn(`[Discord] Command at ${filePath} missing "data" or "execute"`);
       }
     }
 
@@ -47,20 +47,20 @@ async function initializeDiscordBot() {
     }
 
     await client.login(config.token);
-    logger.info(`Discord: Logged in as ${client.user?.tag}`);
+    logger.info(`[Discord] Logged in as ${client.user?.tag}`);
   } catch (/** @type {any} */ error) {
-    logger.error('Discord: Error initializing bot:', { stack: error.stack });
+    logger.error('[Discord] Error initializing bot:', { stack: error.stack });
   }
 }
 
 process.on('SIGINT', async () => {
-  logger.info('Node: Shutting down...');
+  logger.info('[Node] Shutting down...');
   await client.destroy();
   process.exit(0);
 });
 
 process.on('unhandledRejection', (/** @type {any} */ error) => {
-  logger.error('Node: Unhandled promise rejection:', { stack: error.stack });
+  logger.error('[Node] Unhandled promise rejection:', { stack: error.stack });
 });
 
 initializeDiscordBot();

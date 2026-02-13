@@ -34,14 +34,14 @@ export default {
       const command = client.commands.get(interaction.commandName);
 
       if (!command) {
-        logger.warn(`No command matching ${interaction.commandName} was found.`);
+        logger.warn(`[Discord] No command matching ${interaction.commandName} was found.`);
         return;
       }
 
       try {
         await command.execute(interaction);
       } catch (/** @type {any} */ error) {
-        logger.error(`Error executing command ${interaction.commandName}:`, {
+        logger.error(`[Discord] Error executing command ${interaction.commandName}:`, {
           stack: error.stack,
         });
         await interaction.reply({
@@ -55,14 +55,14 @@ export default {
       const command = client.commands.get(interaction.commandName);
 
       if (!command || typeof command.autocomplete !== 'function') {
-        logger.error(`No command matching ${interaction.commandName} was found.`);
+        logger.error(`[Discord] No command matching ${interaction.commandName} was found.`);
         return;
       }
 
       try {
         await command.autocomplete(interaction);
       } catch (/** @type {any} */ error) {
-        logger.error(`Error executing autocomplete for ${interaction.commandName}:`, {
+        logger.error(`[Discord] Error executing autocomplete for ${interaction.commandName}:`, {
           stack: error.stack,
         });
         await interaction.respond([
@@ -88,7 +88,7 @@ export default {
       try {
         await command.handleModalSubmit(interaction);
       } catch (/** @type {any} */ error) {
-        logger.error(`Error handling modal submission ${interaction.customId}:`, {
+        logger.error(`[Discord] Error handling modal submission ${interaction.customId}:`, {
           stack: error.stack,
         });
         await interaction.reply({
@@ -112,7 +112,7 @@ export default {
       try {
         await command.handleButtonClick(interaction);
       } catch (/** @type {any} */ error) {
-        logger.error(`Error handling button click ${interaction.customId}:`, {
+        logger.error(`[Discord] Error handling button click ${interaction.customId}:`, {
           stack: error.stack,
         });
         await interaction.reply({
@@ -137,7 +137,7 @@ export default {
         await command.handleSelectMenu(interaction);
       } catch (/** @type {any} */ error) {
         logger.error(
-          `Error handling select menu interaction ${interaction.customId.split('_')[0]}:`,
+          `[Discord] Error handling select menu interaction ${interaction.customId.split('_')[0]}:`,
           {
             stack: error.stack,
           }
@@ -148,7 +148,7 @@ export default {
         });
       }
     } else {
-      logger.warn(`Unhandled interaction type: ${interaction.type}`);
+      logger.warn(`[Discord] Unhandled interaction type: ${interaction.type}`);
     }
   },
 };
