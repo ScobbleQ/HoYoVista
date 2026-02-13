@@ -54,7 +54,7 @@ export async function fetchCheckin(gameId, { cookies }) {
       return { status: 'Failed', retcode: -1, message: response.statusText };
     }
 
-    console.debug(response.data.retcode);
+    console.debug(response.status, response.data.retcode);
 
     // Loosely check for rate limit
     if (response.data.retcode == 429) {
