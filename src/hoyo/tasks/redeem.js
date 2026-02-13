@@ -1,4 +1,4 @@
-import { ContainerBuilder, MessageFlags } from 'discord.js';
+import { ContainerBuilder, DiscordAPIError, MessageFlags } from 'discord.js';
 import pLimit from 'p-limit';
 import {
   addAttemptedCode,
@@ -6,6 +6,7 @@ import {
   getCookies,
   getUserLinkedGames,
   getUsersWithAutoRedeem,
+  updateUser,
 } from '../../db/queries.js';
 import { IdToAbbr, IdToFull } from '../../hoyo/utils/constants.js';
 import logger from '../../utils/logger.js';
@@ -13,8 +14,8 @@ import { censorUid } from '../../utils/privacy.js';
 import { redeemCode } from '../api/redeem.js';
 import { cleanAttemptedCodes } from '../utils/cleanAttemptedCodes.js';
 import { Games } from '../utils/constants.js';
-import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
 import { delayMs } from '../utils/delay.js';
+import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
 
 /** @typedef {import("../../utils/typedef.js").GameID} GameID */
 
@@ -33,7 +34,7 @@ export async function autoRedeem(client) {
   const users = await getUsersWithAutoRedeem();
   const limit = pLimit(10);
 
-  console.log(`[Cron] Starting redeem for ${users.length} users`);
+  logger.info(`[Cron:ARedeem] Starting redeem for ${users.length} users`);
   const task = users.map((u) =>
     limit(async () => {
       try {
@@ -148,7 +149,7 @@ export async function autoRedeem(client) {
             // Data returned, add the code to the text display
             gameSectionText +=
               `- Code: \`${code.code}\`${code.rewards ? `\n> Reward: ${code.rewards}` : ''}`.trim() +
-              '\n\n';
+              '\n';
 
             // Add event to the database
             if (u.collectData) {
@@ -179,18 +180,28 @@ export async function autoRedeem(client) {
               flags: MessageFlags.IsComponentsV2,
             });
           } catch (/** @type {any} */ error) {
-            logger.error(`Auto Redeem: Failed to DM user: ${u.uid}`, {
-              stack: error.stack,
-            });
+            if (error instanceof DiscordAPIError && error.code === 50007) {
+              // User has DMs disabled, disable auto redeem
+              await updateUser(u.uid, {
+                field: 'notifyRedeem',
+                value: false,
+              });
+            } else {
+              logger.error(`[Cron:ARedeem] Failed to DM user: ${u.uid}`, {
+                stack: error.stack,
+              });
+            }
           }
         }
       } catch (/** @type {any} */ error) {
-        logger.error(`Auto Redeem: Failed for user: ${u.uid}`, { stack: error.stack });
+        logger.error(`[Cron:ARedeem] Failed for user: ${u.uid}`, { stack: error.stack });
       } finally {
         await cleanAttemptedCodes(u.uid, availableCodes);
       }
     })
   );
 
-  await Promise.allSettled(task);
+  await Promise.allSettled(task).then((r) => {
+    logger.info(`[Cron:ARedeem] Redeem completed for ${r.length} users`);
+  });
 }

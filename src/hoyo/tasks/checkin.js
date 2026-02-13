@@ -1,10 +1,11 @@
-import { ContainerBuilder, MessageFlags } from 'discord.js';
+import { ContainerBuilder, DiscordAPIError, MessageFlags } from 'discord.js';
 import pLimit from 'p-limit';
 import {
   addEvent,
   getCookies,
   getUserLinkedGames,
   getUsersWithAutoCheckin,
+  updateUser,
 } from '../../db/queries.js';
 import { IdToFull } from '../../hoyo/utils/constants.js';
 import logger from '../../utils/logger.js';
@@ -26,7 +27,7 @@ export async function autoCheckin(client) {
   const users = await getUsersWithAutoCheckin();
   const limit = pLimit(10);
 
-  console.log(`[Cron] Starting check-in for ${users.length} users`);
+  logger.info(`[Cron:ACheckin] Starting check-in for ${users.length} users`);
   const task = users.map((u) =>
     limit(async () => {
       try {
@@ -118,18 +119,28 @@ export async function autoCheckin(client) {
               flags: MessageFlags.IsComponentsV2,
             });
           } catch (/** @type {any} */ error) {
-            logger.error(`Auto Checkin: Failed to DM user: ${u.uid}`, {
-              stack: error.stack,
-            });
+            if (error instanceof DiscordAPIError && error.code === 50007) {
+              // User has DMs disabled, disable auto check-in
+              await updateUser(u.uid, {
+                field: 'notifyCheckin',
+                value: false,
+              });
+            } else {
+              logger.error(`[Cron:ACheckin] Failed to DM user: ${u.uid}`, {
+                stack: error.stack,
+              });
+            }
           }
         }
       } catch (/** @type {any} */ error) {
-        logger.error(`Auto Checkin: Failed for user: ${u.uid}`, {
+        logger.error(`[Cron:ACheckin] Auto Checkin: Failed for user: ${u.uid}`, {
           stack: error.stack,
         });
       }
     })
   );
 
-  await Promise.allSettled(task);
+  await Promise.allSettled(task).then((r) => {
+    logger.info(`[Cron:ACheckin] Check-in completed for ${r.length} users`);
+  });
 }
