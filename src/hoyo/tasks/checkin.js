@@ -121,6 +121,7 @@ export async function autoCheckin(client) {
           } catch (/** @type {any} */ error) {
             if (error instanceof DiscordAPIError && error.code === 50007) {
               // User has DMs disabled, disable auto check-in
+              logger.info(`[Cron:ACheckin] Disabling auto check-in for ${u.uid}`);
               await updateUser(u.uid, {
                 field: 'notifyCheckin',
                 value: false,

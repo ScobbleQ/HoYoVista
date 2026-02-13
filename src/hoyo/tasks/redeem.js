@@ -183,6 +183,7 @@ export async function autoRedeem(client) {
           } catch (/** @type {any} */ error) {
             if (error instanceof DiscordAPIError && error.code === 50007) {
               // User has DMs disabled, disable auto redeem
+              logger.info(`[Cron:ARedeem] Disabling auto redeem for ${u.uid}`);
               await updateUser(u.uid, {
                 field: 'notifyRedeem',
                 value: false,
