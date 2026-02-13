@@ -48,8 +48,7 @@ export async function fetchCheckin(gameId, { cookies }) {
   }
 
   try {
-    const response = await axios.post(url, requestData, { headers });  
-    // HoYo always return 200, this is for post failures  
+    const response = await axios.post(url, requestData, { headers });
     if (response.status !== 200) {
       return { status: 'Failed', retcode: -1, message: response.statusText };
     }
@@ -59,7 +58,12 @@ export async function fetchCheckin(gameId, { cookies }) {
     // Loosely check for rate limit
     if (response.data.retcode == 429) {
       console.debug(response.headers);
-      return { status: 'Failed', retcode: -1, message: 'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.' };
+      return {
+        status: 'Failed',
+        retcode: -1,
+        message:
+          'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.',
+      };
     }
 
     // Check-in failed

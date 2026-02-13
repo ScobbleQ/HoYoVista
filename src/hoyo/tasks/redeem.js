@@ -134,22 +134,23 @@ export async function autoRedeem(client) {
               }
             }
 
-            // Code redemption failed, skip
+            // Add the code to the text
+            gameSectionText += `- Code: \`${code.code}\`\n> `;
+
+            // Code redemption failed, add error message
             if (!redeem) {
-              gameSectionText += `- Code \`${code.code}\`\n> [-999] Internal server error\n`;
+              gameSectionText += `[-999] Internal server error\n`;
               continue;
             }
 
-            // No data returned, probably an error
+            // No data returned, add error message
             if (!redeem.data) {
-              gameSectionText += `- Code: \`${code.code}\`\n> [${redeem.retcode}] ${redeem.message}\n`;
+              gameSectionText += `[${redeem.retcode}] ${redeem.message}\n`;
               continue;
             }
 
-            // Data returned, add the code to the text display
-            gameSectionText +=
-              `- Code: \`${code.code}\`${code.rewards ? `\n> Reward: ${code.rewards}` : ''}`.trim() +
-              '\n';
+            // Data returned, add reward message
+            gameSectionText += `Reward: ${code.rewards ? code.rewards : 'Unknown'}\n`;
 
             // Add event to the database
             if (u.collectData) {
