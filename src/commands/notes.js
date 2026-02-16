@@ -196,6 +196,7 @@ export default {
 
       if (notes.daily_task) {
         const dailyTask = notes.daily_task;
+        console.log(dailyTask);
 
         notesContainer.addSeparatorComponents((separator) => separator);
         notesContainer.addSectionComponents((section) =>
@@ -207,23 +208,24 @@ export default {
                   '-# Daily Commissions',
                   dailyTask.task_rewards
                     .map(
-                      /** @param {{ status: "temp" | "TaskRewardStatusUnfinished"}} t */ (t) =>
+                      /** @param {{ status: keyof typeof GenshinCommission}} t */ (t) =>
                         GenshinCommission[t.status]
                     )
                     .join(''),
                   '-# Encounter Points',
                   dailyTask.attendance_rewards
                     .map(
-                      /** @param {{ status: "AttendanceRewardStatusTakenAward" | "AttendanceRewardStatusUnfinished"}} t */ (
-                        t
-                      ) => GenshinCommission[t.status]
+                      /** @param {{ status: keyof typeof GenshinCommission}} t */ (t) =>
+                        GenshinCommission[t.status]
                     )
                     .join(''),
                   '-# Long-Term Encounter Points',
                   `${GenshinCommission.SEP} x${dailyTask.stored_attendance}`,
                   codeBlock(
                     'js',
-                    dailyTask.finished_num === dailyTask.total_num ? 'All Claimed' : 'not'
+                    dailyTask.finished_num === dailyTask.total_num
+                      ? 'All Claimed'
+                      : `${dailyTask.finished_num}/${dailyTask.total_num}`
                   ),
                 ].join('\n')
               )

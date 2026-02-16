@@ -13,10 +13,12 @@ export const Toggles = Object.freeze({
 });
 
 export const GenshinCommission = Object.freeze({
-  temp: 'e',
-  TaskRewardStatusUnfinished: '<:TaskRewardStatusUnfinished:1469542270301638820>',
-  AttendanceRewardStatusTakenAward: '<:AttendanceRewardStatusTakenAward:1469542272273219614>',
-  AttendanceRewardStatusUnfinished: 'e',
+  TaskRewardStatusTakenAward: '<:AttendanceRewardStatusTakenAward:1469542272273219614>', // DC-Done
+  TaskRewardStatusUnfinished: '<:TaskRewardStatusUnfinished:1469542270301638820>', // DC-Not Done
+  AttendanceRewardStatusTakenAward: '<:AttendanceRewardStatusTakenAward:1469542272273219614>', // EC-Done
+  AttendanceRewardStatusUnfinished: '<:lightnotcomplete:1472974821351493702>', // EC-Not Done
+  AttendanceRewardStatusWaitTaken: '<:lightnotreward:1472974822374903950>', // EC-Done but not claimed
+  AttendanceRewardStatusFinishedNonReward: '<:lightnotcomplete:1472974821351493702>', // EC-Done but no reward
   SEP: '<:EncounterPoint:1469545256553812199>',
 });
 
