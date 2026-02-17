@@ -1,17 +1,17 @@
-import { ContainerBuilder, DiscordAPIError, MessageFlags } from 'discord.js';
 import pLimit from 'p-limit';
-import {
-  addEvent,
-  getCookies,
-  getUserLinkedGames,
-  getUsersWithAutoCheckin,
-  updateUser,
-} from '../../db/queries.js';
+import { getUsersWithAutoCheckin } from '../../db/queries.js';
+import { addEvent, updateUser } from '../../db/queries.js';
 import { IdToFull } from '../../hoyo/utils/constants.js';
 import logger from '../../utils/logger.js';
 import { plural } from '../../utils/plural.js';
 import { censorUid } from '../../utils/privacy.js';
 import { fetchCheckin } from '../api/checkin.js';
+import {
+  RETCODE,
+  createTaskContainer,
+  getUserData,
+  sendTaskNotification,
+} from '../utils/taskHelpers.js';
 
 /** @typedef {import("../../utils/typedef.js").GameID} GameID */
 
@@ -32,18 +32,12 @@ export async function autoCheckin(client) {
     limit(async () => {
       try {
         // Get cookies and linked games for user
-        const [cookies, linkedGames] = await Promise.all([
-          getCookies(u.uid),
-          getUserLinkedGames(u.uid),
-        ]);
-
-        // If no cookies or linked games, skip
+        const [cookies, linkedGames] = await getUserData(u.uid);
         if (!cookies || linkedGames.length === 0) return;
 
         // Create container for check-in summary
-        const checkinContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(`# Checkin Summary\n-# <t:${Math.floor(Date.now() / 1000)}:F>`)
-        );
+        const checkinContainer = createTaskContainer('## Checkin Summary');
+        let hasContent = false;
 
         // Perform check-in for all linked games
         for (const game of linkedGames) {
@@ -56,6 +50,26 @@ export async function autoCheckin(client) {
           // Perform check-in
           const checkin = await fetchCheckin(/** @type {GameID} */ (game.gameId), { cookies });
           if (!checkin || checkin.status === 'Failed') {
+            if (checkin?.status === 'Failed' && checkin.retcode === RETCODE.INVALID_COOKIES) {
+              await updateUser(u.uid, {
+                field: 'autoCheckin',
+                value: false,
+              });
+
+              checkinContainer.addTextDisplayComponents((textDisplay) =>
+                textDisplay.setContent(
+                  [
+                    `### ${IdToFull[game.gameId]} (${censorUid({ uid: game.gameRoleId, flag: u.private })})`,
+                    'The cookies are invalid, please re-link your account.',
+                    'We have disabled auto check-in for this account in the meantime.',
+                  ].join('\n')
+                )
+              );
+
+              hasContent = true;
+              break;
+            }
+
             checkinContainer.addTextDisplayComponents((textDisplay) =>
               textDisplay.setContent(
                 [
@@ -65,6 +79,7 @@ export async function autoCheckin(client) {
                 ].join('\n')
               )
             );
+            hasContent = true;
           } else if (checkin.status === 'SuccessNoDetails') {
             if (u.collectData) {
               await addEvent(u.uid, {
@@ -82,6 +97,7 @@ export async function autoCheckin(client) {
                 ].join('\n')
               )
             );
+            hasContent = true;
           } else {
             if (u.collectData) {
               await addEvent(u.uid, {
@@ -108,30 +124,13 @@ export async function autoCheckin(client) {
                 )
                 .setThumbnailAccessory((thumbnail) => thumbnail.setURL(checkin.award.icon))
             );
+            hasContent = true;
           }
         }
 
         // Send check-in summary to user
-        if (u.notifyCheckin) {
-          try {
-            await client.users.send(u.uid, {
-              components: [checkinContainer],
-              flags: MessageFlags.IsComponentsV2,
-            });
-          } catch (/** @type {any} */ error) {
-            if (error instanceof DiscordAPIError && error.code === 50007) {
-              // User has DMs disabled, disable auto check-in
-              logger.info(`[Cron:ACheckin] Disabling auto check-in for ${u.uid}`);
-              await updateUser(u.uid, {
-                field: 'notifyCheckin',
-                value: false,
-              });
-            } else {
-              logger.error(`[Cron:ACheckin] Failed to DM user: ${u.uid}`, {
-                stack: error.stack,
-              });
-            }
-          }
+        if (hasContent && u.notifyCheckin) {
+          await sendTaskNotification(client, u.uid, checkinContainer, 'ACheckin', 'notifyCheckin');
         }
       } catch (/** @type {any} */ error) {
         logger.error(`[Cron:ACheckin] Auto Checkin: Failed for user: ${u.uid}`, {

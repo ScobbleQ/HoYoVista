@@ -53,20 +53,14 @@ export async function fetchCheckin(gameId, { cookies }) {
       return { status: 'Failed', retcode: -1, message: response.statusText };
     }
 
-    console.debug("c56", cookies.ltuidV2, response.status, response.data.retcode);
+    console.debug('c56', cookies.ltuidV2, response.status, response.data);
 
-    // Loosely check for rate limit
-    if (response.data.retcode == 429) {
-      console.debug("c59", response.headers);
-      return {
-        status: 'Failed',
-        retcode: -1,
-        message:
-          'Rate limit exceeded, please try again later.\nAn automatic fix will be implemented soon, for now please try again manually.',
-      };
+    // Not logged in, early return
+    if (response.data.retcode === -100) {
+      return { status: 'Failed', retcode: -100, message: response.data.message };
     }
 
-    // Check-in failed
+    // Check-in failed for other reasons
     if (response.data.retcode !== 0) {
       return { status: 'Failed', retcode: response.data.retcode, message: response.data.message };
     }

@@ -1,13 +1,6 @@
-import { ContainerBuilder, DiscordAPIError, MessageFlags } from 'discord.js';
 import pLimit from 'p-limit';
-import {
-  addAttemptedCode,
-  addEvent,
-  getCookies,
-  getUserLinkedGames,
-  getUsersWithAutoRedeem,
-  updateUser,
-} from '../../db/queries.js';
+import { addAttemptedCode, getUsersWithAutoRedeem } from '../../db/queries.js';
+import { addEvent } from '../../db/queries.js';
 import { IdToAbbr, IdToFull } from '../../hoyo/utils/constants.js';
 import logger from '../../utils/logger.js';
 import { censorUid } from '../../utils/privacy.js';
@@ -16,6 +9,7 @@ import { cleanAttemptedCodes } from '../utils/cleanAttemptedCodes.js';
 import { Games } from '../utils/constants.js';
 import { delayMs } from '../utils/delay.js';
 import { fetchSeriaCodes } from '../utils/fetchSeriaCodes.js';
+import { createTaskContainer, getUserData, sendTaskNotification } from '../utils/taskHelpers.js';
 
 /** @typedef {import("../../utils/typedef.js").GameID} GameID */
 
@@ -38,24 +32,16 @@ export async function autoRedeem(client) {
   const task = users.map((u) =>
     limit(async () => {
       try {
-        const [cookies, linkedGames] = await Promise.all([
-          getCookies(u.uid),
-          getUserLinkedGames(u.uid),
-        ]);
-
-        // If no cookies or linked games, skip
+        // Get cookies and linked games for user
+        const [cookies, linkedGames] = await getUserData(u.uid);
         if (!cookies || linkedGames.length === 0) return;
 
         let didAttemptRedeem = false;
         let hasAddedSection = false;
 
-        const redeemContainer = new ContainerBuilder()
-          .addTextDisplayComponents((textDisplay) =>
-            textDisplay.setContent(
-              `## Code Redemption Summary\n-# <t:${Math.floor(Date.now() / 1000)}:F>`
-            )
-          )
-          .addSeparatorComponents((separator) => separator);
+        const redeemContainer = createTaskContainer(
+          '## Code Redemption Summary'
+        ).addSeparatorComponents((separator) => separator);
 
         // Loop through all linked games
         for (let i = 0; i < linkedGames.length; i++) {
@@ -175,25 +161,7 @@ export async function autoRedeem(client) {
         }
 
         if (didAttemptRedeem && u.notifyRedeem) {
-          try {
-            await client.users.send(u.uid, {
-              components: [redeemContainer],
-              flags: MessageFlags.IsComponentsV2,
-            });
-          } catch (/** @type {any} */ error) {
-            if (error instanceof DiscordAPIError && error.code === 50007) {
-              // User has DMs disabled, disable auto redeem
-              logger.info(`[Cron:ARedeem] Disabling auto redeem for ${u.uid}`);
-              await updateUser(u.uid, {
-                field: 'notifyRedeem',
-                value: false,
-              });
-            } else {
-              logger.error(`[Cron:ARedeem] Failed to DM user: ${u.uid}`, {
-                stack: error.stack,
-              });
-            }
-          }
+          await sendTaskNotification(client, u.uid, redeemContainer, 'ARedeem', 'notifyRedeem');
         }
       } catch (/** @type {any} */ error) {
         logger.error(`[Cron:ARedeem] Failed for user: ${u.uid}`, { stack: error.stack });
