@@ -231,28 +231,7 @@ export async function addAttemptedCode(uid, gameId, code) {
  * @returns {Promise<Omit<User, 'subscribed' | 'createdAt' | 'updatedAt' | 'notifyRedeem'>[]>}
  */
 export async function getUsersWithAutoCheckin() {
-  // First, find user IDs who have at least one game with autoCheckin=true
-  const targetGames = ['genshin', 'honkai3rd', 'hkrpg', 'zzz'];
-
-  const gamesWithAutoCheckin = await db
-    .select({ uid: games.uid })
-    .from(games)
-    .where(and(eq(games.autoCheckin, true), inArray(games.game, targetGames)));
-
-  if (gamesWithAutoCheckin.length === 0) {
-    return [];
-  }
-
-  // Get only unique user IDs
-  /** @type {Record<string, boolean>} */
-  const userIdsMap = {};
-  for (const g of gamesWithAutoCheckin) {
-    userIdsMap[g.uid] = true;
-  }
-
-  const userIds = Object.keys(userIdsMap);
-
-  // Get all users data
+  const SUPPORTED_GAMES = ['genshin', 'honkai3rd', 'hkrpg', 'zzz'];
   const usersData = await db
     .select({
       uid: users.uid,
@@ -261,35 +240,14 @@ export async function getUsersWithAutoCheckin() {
       notifyCheckin: users.notifyCheckin,
     })
     .from(users)
-    .where(inArray(users.uid, userIds));
-
+    .innerJoin(games, eq(users.uid, games.uid))
+    .where(and(eq(games.autoCheckin, true), inArray(games.game, SUPPORTED_GAMES)))
+    .groupBy(users.uid);
   return usersData;
 }
 
-/**
- * Get users with auto redeem enabled
- * @returns {Promise<Omit<User, 'subscribed' | 'createdAt' | 'updatedAt' | 'notifyCheckin'>[]>}
- */
 export async function getUsersWithAutoRedeem() {
-  const targetGames = ['genshin', 'hkrpg', 'zzz'];
-
-  const gamesWithAutoRedeem = await db
-    .select({ uid: games.uid })
-    .from(games)
-    .where(and(eq(games.autoRedeem, true), inArray(games.game, targetGames)));
-
-  if (gamesWithAutoRedeem.length === 0) {
-    return [];
-  }
-
-  /** @type {Record<string, boolean>} */
-  const userIdsMap = {};
-  for (const g of gamesWithAutoRedeem) {
-    userIdsMap[g.uid] = true;
-  }
-
-  const userIds = Object.keys(userIdsMap);
-
+  const SUPPORTED_GAMES = ['genshin', 'hkrpg', 'zzz'];
   const usersData = await db
     .select({
       uid: users.uid,
@@ -298,8 +256,9 @@ export async function getUsersWithAutoRedeem() {
       notifyRedeem: users.notifyRedeem,
     })
     .from(users)
-    .where(inArray(users.uid, userIds));
-
+    .innerJoin(games, eq(users.uid, games.uid))
+    .where(and(eq(games.autoRedeem, true), inArray(games.game, SUPPORTED_GAMES)))
+    .groupBy(users.uid);
   return usersData;
 }
 
