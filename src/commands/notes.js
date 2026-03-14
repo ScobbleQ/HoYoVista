@@ -196,7 +196,6 @@ export default {
 
       if (notes.daily_task) {
         const dailyTask = notes.daily_task;
-        console.log(dailyTask);
 
         notesContainer.addSeparatorComponents((separator) => separator);
         notesContainer.addSectionComponents((section) =>
