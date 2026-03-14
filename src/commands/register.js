@@ -55,7 +55,7 @@ export default {
     const registerTextDisplay = new TextDisplayBuilder().setContent(
       [
         '## HoYoVista Registration',
-        'By registering, you agree to our [Privacy Policy](https://xentriom.gitbook.io/hoyovista/information/privacy-policy) and [Terms of Service](https://xentriom.gitbook.io/hoyovista/information/terms-of-service).',
+        'By registering, you agree to our [Privacy Policy](https://hyv.xentriom.com/docs/privacy-policy) and [Terms of Service](https://hyv.xentriom.com/docs/terms-of-service).',
       ].join('\n')
     );
     registerContainer.addTextDisplayComponents(registerTextDisplay);
