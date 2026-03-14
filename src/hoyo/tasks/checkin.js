@@ -1,6 +1,5 @@
 import pLimit from 'p-limit';
-import { getUsersWithAutoCheckin } from '../../db/queries.js';
-import { addEvent, updateUser } from '../../db/queries.js';
+import { addEvent, getUsersWithAutoCheckin, updateGame } from '../../db/queries.js';
 import { IdToFull } from '../../hoyo/utils/constants.js';
 import logger from '../../utils/logger.js';
 import { plural } from '../../utils/plural.js';
@@ -51,7 +50,8 @@ export async function autoCheckin(client) {
           const checkin = await fetchCheckin(/** @type {GameID} */ (game.gameId), { cookies });
           if (!checkin || checkin.status === 'Failed') {
             if (checkin?.status === 'Failed' && checkin.retcode === RETCODE.INVALID_COOKIES) {
-              await updateUser(u.uid, {
+              await updateGame(u.uid, {
+                gameId: /** @type {GameID} */ (game.gameId),
                 field: 'autoCheckin',
                 value: false,
               });
