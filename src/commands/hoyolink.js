@@ -256,7 +256,7 @@ export default {
     }
 
     // Check if the user has any linked games
-    const gameList = gameRecord.data?.data?.list;
+    const gameList = gameRecord.data?.list;
     if (!Array.isArray(gameList) || gameList.length === 0) {
       const errorContainer = new ContainerBuilder().addTextDisplayComponents((textDisplay) =>
         textDisplay.setContent(
